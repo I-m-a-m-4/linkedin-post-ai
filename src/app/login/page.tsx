@@ -14,17 +14,18 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user) {
+    // Redirect if user is already logged in
+    if (!loading && user) {
       router.push('/admin-imam');
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
   const handleGoogleSignIn = async () => {
     if (!auth) return;
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      router.push('/admin-imam');
+      // On successful sign-in, the useEffect will trigger the redirect.
     } catch (error) {
       console.error('Error signing in with Google:', error);
     }
@@ -33,7 +34,7 @@ export default function LoginPage() {
   if (loading || user) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p>Loading...</p>
+        <p>Redirecting...</p>
       </div>
     );
   }

@@ -42,18 +42,34 @@ export default function AdminPage() {
   const firestore = useFirestore();
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const API_QUOTA = 1000; // Placeholder for API credit quota
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    } else if (user && user.email !== 'bimex4@gmail.com') {
-      router.push('/');
+    if (loading) {
+      // Still waiting for auth state to resolve, do nothing.
+      return;
     }
+
+    if (!user) {
+      // If loading is finished and there's no user, redirect to login.
+      router.push('/login');
+      return;
+    }
+
+    if (user.email !== 'bimex4@gmail.com') {
+      // If a user is logged in but is not the admin, redirect to home.
+      router.push('/');
+      return;
+    }
+
+    // If we reach here, the user is the authorized admin.
+    setIsAuthorized(true);
+
   }, [user, loading, router]);
   
   useEffect(() => {
     async function getAnalyticsData() {
-        if (!firestore) return;
+        if (!firestore || !isAuthorized) return;
         
         // Fetch Analytics Events
         const eventsRef = collection(firestore, 'analyticsEvents');
@@ -90,12 +106,12 @@ export default function AdminPage() {
         });
     }
 
-    if(user && user.email === 'bimex4@gmail.com' && firestore) {
+    if(isAuthorized && firestore) {
         getAnalyticsData();
     }
-  }, [user, firestore]);
+  }, [isAuthorized, firestore]);
 
-  if (loading || !user || user.email !== 'bimex4@gmail.com' || !analyticsData) {
+  if (loading || !isAuthorized || !analyticsData) {
     return <div className="flex h-screen items-center justify-center">Loading admin dashboard...</div>;
   }
 
