@@ -30,7 +30,9 @@ function AuthHandler({ children }: { children: ReactNode }) {
         try {
           await signInAnonymously(auth);
         } catch (error) {
-          console.error('Anonymous sign-in failed:', error);
+          // This error is expected if anonymous sign-in is disabled in the Firebase console.
+          // We can safely ignore it and the user will proceed without an anonymous identity.
+          console.log('Anonymous sign-in blocked by project settings. User will proceed without an anonymous identity.');
         }
       }
     };
