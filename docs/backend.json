@@ -1,0 +1,100 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's profile information.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The user's unique ID."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's profile picture."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the user profile was created."
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "AnalyticsEvent": {
+      "title": "Analytics Event",
+      "description": "Represents a single analytics event.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who triggered the event."
+        },
+        "eventType": {
+          "type": "string",
+          "description": "The type of event that occurred (e.g., 'autoFormatClick')."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the event occurred."
+        }
+      },
+      "required": ["userId", "eventType", "timestamp"]
+    },
+    "Review": {
+      "title": "User Review",
+      "description": "Represents user feedback or a review.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who submitted the review."
+        },
+        "review": {
+          "type": "string",
+          "description": "The content of the review."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the review was submitted."
+        }
+      },
+      "required": ["userId", "review", "timestamp"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "anonymous"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores public profile information for each user."
+    },
+    "/analyticsEvents/{eventId}": {
+      "schema": {
+        "$ref": "#/entities/AnalyticsEvent"
+      },
+      "description": "Stores analytics events triggered by users."
+    },
+    "/reviews/{reviewId}": {
+      "schema": {
+        "$ref": "#/entities/Review"
+      },
+      "description": "Stores user-submitted reviews and feedback."
+    }
+  }
+}

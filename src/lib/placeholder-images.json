@@ -1,0 +1,140 @@
+{
+  "placeholderImages": [
+    {
+      "id": "avatar",
+      "description": "User avatar for preview",
+      "imageUrl": "https://i.ibb.co/6092wmWW/Whats-App-Image-2025-08-26-at-9-07-54-PM.jpg",
+      "imageHint": "Imam Bello profile"
+    },
+    {
+      "id": "fallbackPostImage",
+      "description": "Fallback image for a LinkedIn post preview",
+      "imageUrl": "https://i.ibb.co/6092wmWW/Whats-App-Image-2025-08-26-at-9-07-54-PM.jpg",
+      "imageHint": "profile picture"
+    },
+    {
+      "id": "carousel1",
+      "description": "Carousel image 1",
+      "imageUrl": "https://framerusercontent.com/images/iMzR5yAzxwo98Ezarakz4fbMw80.webp",
+      "imageHint": "abstract design"
+    },
+    {
+      "id": "carousel2",
+      "description": "Carousel image 2",
+      "imageUrl": "https://framerusercontent.com/images/RqD7TyHuW4CmMnGnRwhXkhJphE.webp",
+      "imageHint": "UI screenshot"
+    },
+    {
+      "id": "carousel3",
+      "description": "Carousel image 3",
+      "imageUrl": "https://framerusercontent.com/images/x6eoEfW3mClxV0laY5F6FxTHAUs.webp",
+      "imageHint": "website component"
+    },
+    {
+      "id": "carousel4",
+      "description": "Carousel image 4",
+      "imageUrl": "https://framerusercontent.com/images/xgjo6abS4mLzEgz47hkatvAa6M.webp",
+      "imageHint": "dashboard chart"
+    },
+    {
+      "id": "carousel5",
+      "description": "Carousel image 5",
+      "imageUrl": "https://framerusercontent.com/images/TMCoogse2AnnLykMDV7DrEcFwI.jpg",
+      "imageHint": "mobile app"
+    },
+    {
+      "id": "carousel6",
+      "description": "Carousel image 6",
+      "imageUrl": "https://framerusercontent.com/images/I9RyCXoZuKiPWtxaIzImQkaW7k.webp",
+      "imageHint": "user interface"
+    },
+    {
+      "id": "carousel7",
+      "description": "Carousel image 7",
+      "imageUrl": "https://framerusercontent.com/images/rawRjd6aS1EFMdXx83WkVQdjxg.jpg",
+      "imageHint": "code editor"
+    },
+    {
+      "id": "carousel8",
+      "description": "Carousel image 8",
+      "imageUrl": "https://framerusercontent.com/images/o3t9prWhwG7gL1Q8xtBLQhXlo7s.jpg",
+      "imageHint": "project management"
+    },
+    {
+      "id": "carousel9",
+      "description": "Carousel image 9",
+      "imageUrl": "https://framerusercontent.com/images/F7ofCY81LzQFfzPKQvJumF4B6II.jpg",
+      "imageHint": "presentation slide"
+    },
+    {
+      "id": "carousel10",
+      "description": "Carousel image 10",
+      "imageUrl": "https://framerusercontent.com/images/Otd482a1g4jOHMSv1bRP7CM0l3o.jpg",
+      "imageHint": "calendar view"
+    },
+    {
+      "id": "carousel11",
+      "description": "Carousel image 11",
+      "imageUrl": "https://framerusercontent.com/images/lEKY6LmL2Qoj6FJDhMgDSwhjUww.jpg",
+      "imageHint": "kanban board"
+    },
+    {
+      "id": "carousel12",
+      "description": "Carousel image 12",
+      "imageUrl": "https://framerusercontent.com/images/fXIVySCHSxrHVcT1rmWm2uFjnjY.webp",
+      "imageHint": "analytics graph"
+    }
+  ],
+  "postImages": [
+    {
+      "id": "postImage_1",
+      "imageUrl": "https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=1974&auto=format&fit=crop",
+      "imageHint": "team collaboration"
+    },
+    {
+      "id": "postImage_2",
+      "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "business meeting"
+    },
+    {
+      "id": "postImage_3",
+      "imageUrl": "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "whiteboard session"
+    },
+    {
+      "id": "postImage_4",
+      "imageUrl": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "science technology"
+    },
+    {
+      "id": "postImage_5",
+      "imageUrl": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=2072&auto=format&fit=crop",
+      "imageHint": "laptop code"
+    },
+    {
+      "id": "postImage_6",
+      "imageUrl": "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=1784&auto=format&fit=crop",
+      "imageHint": "startup team"
+    },
+    {
+      "id": "postImage_7",
+      "imageUrl": "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "office presentation"
+    },
+    {
+      "id": "postImage_8",
+      "imageUrl": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "data analytics"
+    },
+    {
+      "id": "postImage_9",
+      "imageUrl": "https://images.unsplash.com/photo-1531297484001-80022131f5a1?q=80&w=2020&auto=format&fit=crop",
+      "imageHint": "modern technology"
+    },
+    {
+      "id": "postImage_10",
+      "imageUrl": "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2070&auto=format&fit=crop",
+      "imageHint": "discussion brainstorming"
+    }
+  ]
+}
