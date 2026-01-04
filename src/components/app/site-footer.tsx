@@ -31,10 +31,10 @@ export function SiteFooter({
                             <div className="flex items-center gap-2">
                                 <img 
                                     src="https://i.ibb.co/tPC17k0F/free-linkedin-logo-3d-icon-png-download-12257269.webp" 
-                                    alt="FormatAI Logo" 
+                                    alt="PostAI Logo" 
                                     className="h-9 w-9" 
                                 />
-                                <h3 className="text-xl font-bold">FormatAI</h3>
+                                <h3 className="text-xl font-bold">PostAI</h3>
                             </div>
                             <p className="text-sm text-muted-foreground leading-relaxed">
                                 AI-powered formatting to make your LinkedIn posts shine. 
@@ -111,7 +111,7 @@ export function SiteFooter({
                             >
                                 Imam Bello
                             </a>
-                            . © {new Date().getFullYear()} FormatAI. All rights reserved. Not affiliated with LinkedIn.
+                            . © {new Date().getFullYear()} PostAI. All rights reserved. Not affiliated with LinkedIn.
                         </p>
                     </div>
                 </div>

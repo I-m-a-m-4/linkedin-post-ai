@@ -102,7 +102,7 @@ export default function AdminPage() {
   return (
     <div className='p-4 md:p-6 lg:p-8'>
         <div className="mb-8">
-            <h1 className="text-3xl font-bold">FormatAI Analytics</h1>
+            <h1 className="text-3xl font-bold">PostAI Analytics</h1>
             <p className="text-muted-foreground">Visualizing user engagement data and feedback.</p>
         </div>
         <AnalyticsClient

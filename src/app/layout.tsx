@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const poppins = Poppins({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-poppins' });
 
 export const metadata: Metadata = {
-  title: 'FormatAI - AI-Powered LinkedIn Content Formatting',
+  title: 'PostAI - AI-Powered LinkedIn Content Formatting',
   description: 'Instantly format your LinkedIn posts for maximum readability and engagement. Our AI adds smart line breaks, highlights key phrases, and analyzes your content for tone and clarity.',
   keywords: ['LinkedIn formatting', 'AI content formatter', 'social media tool', 'content marketing', 'post optimizer', 'text formatter'],
   icons: {

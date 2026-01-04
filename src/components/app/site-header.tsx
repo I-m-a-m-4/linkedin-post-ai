@@ -6,9 +6,9 @@ export function SiteHeader() {
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
             <div className="flex items-center gap-2 font-semibold">
                 <a href="#" className="flex items-center gap-2">
-                    <img src="https://i.ibb.co/tPC17k0F/free-linkedin-logo-3d-icon-png-download-12257269.webp" alt="FormatAI Logo" className="h-8 w-8" />
+                    <img src="https://i.ibb.co/tPC17k0F/free-linkedin-logo-3d-icon-png-download-12257269.webp" alt="PostAI Logo" className="h-8 w-8" />
                     <h1 className="text-lg font-semibold sm:text-xl text-foreground">
-                        FormatAI
+                        PostAI
                     </h1>
                 </a>
             </div>

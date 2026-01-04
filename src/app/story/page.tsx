@@ -32,7 +32,7 @@ const StoryText = ({ children }: { children: React.ReactNode }) => {
 };
 
 const storyPageContent = [
-  "class FormatAI {",
+  "class PostAI {",
   "  constructor() {",
   "    this.mission = 'Clarity';",
   "    this.tools = ['AI', 'Data'];",
@@ -44,7 +44,7 @@ const storyPageContent = [
   "  }",
   "}",
   " ",
-  "// FormatAI 🔥 AI talks",
+  "// PostAI 🔥 AI talks",
 ];
 
 
@@ -61,7 +61,7 @@ export default function StoryPage() {
               transition={{ duration: 0.5 }}
               className="text-4xl font-black md:text-7xl animate-gradient"
             >
-              The Story of FormatAI
+              The Story of PostAI
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -91,7 +91,7 @@ export default function StoryPage() {
             </StoryText>
             
             <StoryText>
-              And so, FormatAI was born. First as a quiet WhatsApp group, an idea held close. Staring at the code editor late one night, a familiar hesitation crept in. That whisper of doubt before you share something new with the world. Is it good enough? Will anyone care?
+              And so, PostAI was born. First as a quiet WhatsApp group, an idea held close. Staring at the code editor late one night, a familiar hesitation crept in. That whisper of doubt before you share something new with the world. Is it good enough? Will anyone care?
             </StoryText>
 
             <StoryText>

@@ -74,7 +74,8 @@ import {
   Mic,
   Palette,
   ArrowUp,
-  CaseUpper
+  CaseUpper,
+  Type
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { 
@@ -279,27 +280,25 @@ export default function Home() {
 
     let pastedContent = '';
     const pastedHtml = e.clipboardData.getData('text/html');
-    const pastedText = e.clipboardData.getData('text/plain');
-
+    
     if (pastedHtml) {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = pastedHtml;
         
-        // Remove unwanted tags like <hr>
-        tempDiv.querySelectorAll('hr').forEach(hr => hr.remove());
-        
-        // Remove style and class attributes to prevent unwanted styling
+        // Remove unwanted tags and attributes
+        tempDiv.querySelectorAll('hr, style, script').forEach(el => el.remove());
         tempDiv.querySelectorAll('*').forEach(el => {
-            el.removeAttribute('style');
             el.removeAttribute('class');
+            el.removeAttribute('style');
         });
         
         pastedContent = tempDiv.innerHTML;
     } else {
-        pastedContent = pastedText;
+        // Fallback to plain text
+        pastedContent = e.clipboardData.getData('text/plain');
     }
     
-    // Final check for horizontal rule characters from plain text
+    // Final check for horizontal rule characters from plain text just in case
     pastedContent = pastedContent.replace(/---/g, '');
 
     document.execCommand('insertHTML', false, pastedContent);
@@ -889,7 +888,7 @@ export default function Home() {
                                 <TooltipTrigger asChild>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="ghost" size="sm">
-                                            <CaseUpper className="h-4 w-4" />
+                                            <Type className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                 </TooltipTrigger>
