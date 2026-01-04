@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description: 'Instantly format your LinkedIn posts for maximum readability and engagement. Our AI adds smart line breaks, highlights key phrases, and analyzes your content for tone and clarity.',
   keywords: ['LinkedIn formatting', 'AI content formatter', 'social media tool', 'content marketing', 'post optimizer', 'text formatter'],
   icons: {
-    icon: 'https://i.ibb.co/tPC17k0F/free-linkedin-logo-3d-icon-png-download-12257269.webp',
+    icon: '/icon.png',
   },
 };
 
