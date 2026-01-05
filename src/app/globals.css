@@ -78,6 +78,10 @@
     display: block; /* For Firefox */
     color: hsl(var(--muted-foreground));
   }
+  
+  [contenteditable] a {
+    @apply font-bold text-blue-600 underline cursor-pointer;
+  }
 
   ::-webkit-scrollbar {
     width: 8px;

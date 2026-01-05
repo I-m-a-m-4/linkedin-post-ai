@@ -50,11 +50,12 @@ const autoFormatTextPrompt = ai.definePrompt({
   - **Minimalist Bolding:** Use standard markdown bolding (\`**text**\`) **very sparingly**. Only highlight 1-3 of the most critical phrases or takeaways. Do not bold full sentences.
   - **Strategic Underlining & Strikethrough:** For emphasis on certain non-critical points, you can use markdown for underline (\`__text__\`) or strikethrough (\`~~text~~\`). Use these even more sparingly than bolding.
   - **No Italics.**
-  - **Smart Lists:** Convert list-like content into bullet points (using '*' or '-') or numbered lists.
-  - **Emoji Sparing:** Use a maximum of 1-3 relevant emojis for the entire post.
+  - **Smart Lists:** Convert list-like content into bullet points. You can use standard markers like '*' or '-', but also consider using '->' or subtle, relevant emojis like '✅' for a more modern look.
+  - **Very Subtle Emojis:** Use a maximum of 1-2 relevant, professional emojis for the entire post. Avoid generic western-style emoticons like :-) or :-(. The goal is subtle enhancement, not distraction.
   - **Hook and Clarity:** If a strong opening "hook" is missing, re-arrange the user's own sentences to create one, but do not write new content. Remove filler words without changing the core meaning.
   - **Professional Tone:** Ensure the final output maintains a professional, clear, and authoritative tone suitable for LinkedIn.
   - **No Horizontal Rules:** Do not use '---'.
+  - **Link Handling**: Automatically detect URLs (like https://lnkd.in/...) and format them as clickable links.
 
   **Input Text To Process:**
   {{{rawText}}}
@@ -69,7 +70,19 @@ const autoFormatTextFlow = ai.defineFlow(
     outputSchema: AutoFormatTextOutputSchema,
   },
   async (input) => {
-    const { output } = await autoFormatTextPrompt(input);
+    // Automatically detect links in the raw text and wrap them in markdown link format
+    // This helps the LLM recognize them as distinct entities.
+    const linkRegex = /(https?:\/\/[^\s]+)/g;
+    const textWithMarkdownLinks = input.rawText.replace(linkRegex, '<$1>');
+
+    const { output } = await autoFormatTextPrompt({ rawText: textWithMarkdownLinks });
+
+    if (output) {
+      // The LLM should return markdown links. Now we convert them to HTML `<a>` tags.
+      const htmlWithLinks = output.formattedText.replace(/<([^>]+)>/g, '<a href="$1" target="_blank">$1</a>');
+      return { formattedText: htmlWithLinks };
+    }
+
     return output!;
   }
 );

@@ -60,7 +60,6 @@ import {
   Repeat2,
   Send,
   Smartphone,
-  Smile,
   Sparkle,
   Sparkles,
   Star,
@@ -83,19 +82,6 @@ import {
   convertTextToUnicode,
   convertUnicodeToText,
 } from '@/lib/unicode-text';
-
-
-const emojis = [
-  '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😉', '😊', '😋', '😎', '😍', '😘', '😗', '😙', '😚', '🙂', '🤗', '🤔', '😐', '😑', '😶', '🙄', '😏', '😣', '😥', '😮', '🤐', '😯', '😪', '😫', '😴', '😌', '😛', '😜', '😝', '🤤', '😒', '😓', '😔', '😕', '🙃', '🤑', '😲', '☹️', '🙁', '😖', '😞', '😟', '😤', '😢', '😭', '😦', '😧', '😨', '😩', '🤯', '😬', '😰', '😱', '😳', '🤪', '😵', '😡', '😠', '🤬', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '😇', '🤠', '🤡', '🤥', '🤫', '🤭', '🧐', '🤓', '😈', '👿', '👹', '👺', '💀', '👻', '👽', '🤖', '💩', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾',
-  '👋', '🤚', '🖐', '✋', '🖖', '👌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦾', '🦵', '🦿', '🦶', '👣', '👂', '🦻', '👃', '🧠', '🦷', '👀', '👁', '👅', '👄', '💋', '🩸',
-  '💡', '✨', '🚀', '🔥', '💯', '✅', '❌', '➡️', '⬅️', '⬆️', '⬇️',
-  '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐽', '🐸', '🐵', '🙈', '🙉', '🙊', '🐒', '🐔', '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦗', '🕷', '🕸', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍', '🐈', '🐓', '🦃', '🦚', '🦜', '🦢', '🦩', '🕊', '🐇', '🦝', '🦨', '🦦', '🦥', '🐁', '🐀', '🐿', '🦔',
-  '🍏', '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌶', '🌽', '🥕', '🧄', '🧅', '🥔', '🍠', '🥐', '🥯', '🍞', '🥖', '🥨', '🧀', '🥚', '🍳', '🧈', '🥞', ' waffles', '🥓', '🥩', '🍗', '🍖', '핫도그', '🍔', '🍟', '🍕', '🥪', '🥙', '🧆', '🌮', '🌯', '🥗', '🥘', '🥫', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱', '🥟', '🦪', '🍤', '🍙', '🍚', '🍘', '🍥', '𥠠', '𥮮', '🍢', '🍡', '🍧', '🍨', '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿', '🍩', '🍪', '🌰', '🥜', '🍯', '🥛', '🍼', '☕', '🍵', '🧃', '🥤', '🍶', '🍺', '🍻', '🥂', '🍷', '🥃', '🍸', '🍹', '🧉', '🍾', '🧊', '🥄', '🍴', '🍽', '🥣', '🥡', '🥢', '🧂',
-  '🌍', '🌎', '🌏', '🌐', '🗺', '🗾', '🧭', '🏔', '⛰', '🌋', '🗻', '🏕', '🏖', '🏜', '🏝', '🏞', '🏟', '🏛', '🏗', '🧱', '🏘', '🏚', '🏠', '🏡', '🏢', '🏣', '🏤', '🏥', '🏦', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏯', '🏰', '💒', '🗼', '🗽', '⛪', '🕌', '🛕', ' synagogues', '⛩', '🕋', '⛲', '⛺', '🌁', '🌃', '🏙', '🌄', '🌅', '🌆', '🌇', '🌉', '♨️', '🎠', '🎡', '🎢', '💈', '🎪', '🚂', '🚃', '🚄', '🚅', '🚆', '🚇', '🚈', '🚉', '🚊', '🚝', '🚞', '🚋', '🚌', '🚍', '🚐', '🚑', '🚒', '🚓', '🚔', '🚕', '🚖', '🚗', '🚘', '🚚', '🚛', '🚜', '🏎', '🏍', '🛵', '🦽', '🦼', '🛺', '🚲', '🛴', '🛹', '🚏', '🛣', '🛤', '🛢', '⛽', '🚨', '🚥', '🚦', '🛑', '🚧', '⚓', '⛵', '🛶', '🚤', '🛳', '⛴', '🛥', '🚢', '✈️', '🛩', '🛫', '🛬', '🪂', '💺', '🚁', '🚟', '🚠', '🚡', '🛰', '🚀', '🛸',
-  '⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '', '🏓', '🏸', '🏒', '🏑', ' lacrosse', '🏏', '🥅', '⛳', ' Kite', '🏹', '🎣', '🤿', '🥊', '🥋', '', '𛷷', '⛸', '🌁', '🎿', '⛷', '🏂', '🏋️‍♀️', '🏋️', '🏋️‍♂️', '𤼼‍♀️', '𤼼', '𤼼‍♂️', '🤸‍♀️', '🤸', '🤸‍♂️', '⛹️‍♀️', '⛹️', '⛹️‍♂️', '🤺', '𤾾‍♀️', 'E3', '🏌️‍♀️', '🏌️', '🏌️‍♂️', '🏇', '🧘‍♀️', '🧘', '🧘‍♂️', '🏄‍♀️', '🏄', '🏄‍♂️', '🏊‍♀️', '🏊', '🏊‍♂️', '🤽‍♀️', '🤽', '🤽‍♂️', '🚣‍♀️', '🚣', '🚣‍♂️', '🧗‍♀️', '🧗', '🧗‍♂️', '🚵‍♀️', '🚵', '🚵‍♂️', '🚴‍♀️', '🚴', '🚴‍♂️',
-  '⌚', '📱', '📲', '💻', '⌨️', '🖥', '🖨', '🖱', '', '🕹', '', '💽', '💾', '💿', '📀', '📼', '📷', '📸', '📹', '🎥', '🎞', '📞', '☎️', '📟', '📠', '📺', '📻', '🎙', '', '', '⏱', '⏲', '⏰', '🕰', '⌛', '⏳', '📡', '🔋', '🔌', '🔦', '🕯', '𪔔', '🧯', '💸', '💵', '💴', '💶', '💷', '💰', '💳', '💎', '⚖️', '🧰', '🔧', '🔨', '⚒', '🛠', '⛏', '🔩', '⚙️', '⛓', '🧲', '🔫', '💣', '🧨', '🔪', '🗡', '⚔️', '🛡', '🚬', '⚰️', '⚱️', '🏺', '🔮', '📿', '🧿', '⚗️', '🔭', '🔬', '🕳', '💊', '💉', '🧬', '🦠', '🧫', '🧪', '🌡', '🧹', '🧺', '🧻', '🚽', '🚰', '🚿', '🛁', '🛀', '🧼', '🪒', '🧽', '🪣', '🔑', '🗝', '🛋', '🪑', '🛌', '🛏', '🚪', '🪞', '🪟', '🧳', '🖼', '🛍', '🛒', '🎁', '🎈', '🎏', '🎀', '🎊', '🎉', '🎎', '🏮', '🎐', '🧧', '✉️', '📩', '📨', '📧', '💌', '📮', '📪', '📫', '📬', '📭', '📦', '📯', '📥', '📤', '📜', '📃', '📄', '📑', '🧾', '📊', '📈', '📉', '🗒', '🗓', '📆', '📅', '🗑', '📇', '🗃', '🗳', '', '📋', '📁', '📂', '🗂', '🗞', '📰', '📓', '📔', '📒', '📕', '📗', '📘', '📙', '📚', '📖', '🔖', '🧷', '🔗', '📎', '🖇', '📐', '📏', '🧮', '📌', '📍', '✂️', '🖊', '🖋', '✒️', '🖌', '🖍', '📝', '✏️', '🔍', '🔎', '🔏', '🔐', '🔒', '🔓',
-  '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '☮️', '✝️', '☪️', '🕉', '☸️', '✡️', '🔯', '🕎', '☯️', '☦️', '🛐', '⛎', '♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓', '🆔', '⚛️', '🉑', '☢️', '☣️', '📴', '📳', '🈶', '🈚', '🈸', '🈺', '🈷️', '✴️', '🆚', '💮', '🉐', '㊙️', '㊗️', '🈴', '🈵', '🈹', '🈲', '🅰️', '🅱️', '🆎', '🆑', '🅾️', '🆘', '❌', '⭕', '🛑', '⛔', '📛', '🚫', '💯', '💢', '♨️', '🚷', '🚱', '🔞', '📵', '🚭', '❗️', '❕', '❓', '❔', '‼️', '⁉️', '🔅', '🔆', '〽️', '⚠️', '🚸', '🔱', '⚜️', '🔰', '♻️', '✅', '🈯', '💹', '❇️', '✳️', '❎', '🌐', '💠', 'Ⓜ️', '🌀', '💤', '🏧', '🚾', '♿', '🅿️', '🈳', '🈂️', '🛂', '🛃', '🛄', '🛅', '🚺', '🚼', '🚻', '🚮', '🎦', '📶', '🈁', '', 'ℹ️', '🔤', '🔡', 'G', '🆖', '🆗', '🆙', '🆒', '🆕', '🆓', '0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟', '🔢', '#️⃣', '*️⃣', '⏏️', '▶️', '⏸', '⏯', '⏹', '⏺', '⏭', '⏮', '⏩', '⏪', '⏫', '⏬', '◀️', '🔼', '🔽', '↗️', '↘️', '↙️', '↖️', '↕️', '↔️', '↪️', '↩️', '⤴️', '⤵️', '🔀', '🔁', '𔂱', '🔄', '🔃', '🎵', '🎶', '➕', '➖', '➗', '✖️', '♾', '💲', '💱', '™️', '©️', '®️', '🔚', '🔙', '🔛', '🔝', '🔜', '✔️', '☑️', '🔘', '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⚫', '⚪', '🟤', '🔺', '🔻', '🇩🇪', '🇺🇸', '🇬🇧'
-].filter((e, i, a) => a.indexOf(e) === i && e !== '');
 
 
 const featureDetails = {
@@ -162,53 +148,6 @@ function FormattingProgress({ progress, step }: { progress: number, step: string
     );
 }
 
-function EmojiPicker({ onEmojiClick }: { onEmojiClick: (emoji: string) => void }) {
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  const filteredEmojis = emojis.filter(emoji => 
-    emoji.includes(searchTerm.toLowerCase())
-  );
-  
-  const allEmojis = searchTerm ? filteredEmojis : emojis;
-
-  return (
-    <Popover>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <Smile className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-        </TooltipTrigger>
-        <TooltipContent><p>Add Emoji</p></TooltipContent>
-      </Tooltip>
-      <PopoverContent className="w-80">
-        <div className="flex flex-col gap-4">
-          <Input
-            placeholder="Search emojis..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <div className="grid h-48 grid-cols-8 gap-2 overflow-y-auto">
-            {allEmojis.map((emoji, index) => (
-              <Button
-                key={`${emoji}-${index}`}
-                variant="ghost"
-                size="icon"
-                onClick={() => onEmojiClick(emoji)}
-                className="text-xl"
-              >
-                {emoji}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 const EditorContent = React.forwardRef<
   HTMLDivElement,
   { onInput: (e: React.FormEvent<HTMLDivElement>) => void; initialContent: string; onPaste: (e: React.ClipboardEvent<HTMLDivElement>) => void; }
@@ -241,6 +180,17 @@ interface HomeProps {
   firestore: Firestore | null;
 }
 
+const professionalNames = [
+  'Aria Montgomery',
+  'Julian Hayes',
+  'Sterling Archer',
+  'Evelyn Reed',
+  'Orion Blackwood',
+  'Seraphina Jolie',
+  'Kairos Thorne',
+  'Isla Vanderbilt',
+];
+
 export default function Home({ auth, firestore }: HomeProps) {
   const [text, setText] = useState('');
   const [reviewText, setReviewText] = useState('');
@@ -264,6 +214,7 @@ export default function Home({ auth, firestore }: HomeProps) {
 
   const { user, loading: userLoading } = useUser(auth);
   const [randomImageUrl, setRandomImageUrl] = useState('');
+  const [randomName, setRandomName] = useState('');
 
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -274,10 +225,63 @@ export default function Home({ auth, firestore }: HomeProps) {
       const randomIndex = Math.floor(Math.random() * postImages.length);
       setRandomImageUrl(postImages[randomIndex].imageUrl);
     }
+    setRandomName(professionalNames[Math.floor(Math.random() * professionalNames.length)]);
   }, []);
 
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
-    setText(e.currentTarget.innerHTML);
+    const editor = e.currentTarget;
+    const linkRegex = /(https?:\/\/[^\s]+)/g;
+    
+    // This is a naive implementation and can be slow on large content.
+    // For production apps, consider a more robust library or approach.
+    if (editor.innerText.match(linkRegex)) {
+        const selection = window.getSelection();
+        const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = editor.innerHTML;
+        
+        const walker = document.createTreeWalker(tempDiv, Node.TEXT_NODE);
+        let node;
+        const nodesToReplace: { parent: Node, oldNode: Node, newContent: DocumentFragment }[] = [];
+
+        while(node = walker.nextNode()) {
+            if (node.parentElement?.tagName === 'A') continue;
+
+            const matches = node.textContent?.match(linkRegex);
+            if(matches) {
+                const fragment = document.createDocumentFragment();
+                let lastIndex = 0;
+                matches.forEach(match => {
+                    const urlIndex = node.textContent!.indexOf(match, lastIndex);
+                    fragment.appendChild(document.createTextNode(node.textContent!.substring(lastIndex, urlIndex)));
+                    const anchor = document.createElement('a');
+                    anchor.href = match;
+                    anchor.textContent = match;
+                    anchor.target = "_blank";
+                    fragment.appendChild(anchor);
+                    lastIndex = urlIndex + match.length;
+                });
+                fragment.appendChild(document.createTextNode(node.textContent!.substring(lastIndex)));
+                
+                if (node.parentNode) {
+                    nodesToReplace.push({ parent: node.parentNode, oldNode: node, newContent: fragment });
+                }
+            }
+        }
+
+        if (nodesToReplace.length > 0) {
+            nodesToReplace.forEach(({parent, oldNode, newContent}) => {
+                parent.replaceChild(newContent, oldNode);
+            });
+            editor.innerHTML = tempDiv.innerHTML;
+            if (range && selection) {
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
+    }
+    
+    setText(editor.innerHTML);
   };
   
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
@@ -472,13 +476,6 @@ export default function Home({ auth, firestore }: HomeProps) {
     }
   };
 
-
-  const onEmojiClick = (emoji: string) => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-    document.execCommand('insertText', false, emoji);
-    setText(editorRef.current.innerHTML);
-  };
 
   const handleCopyToClipboard = async () => {
     if (!editorRef.current) {
@@ -763,18 +760,18 @@ export default function Home({ auth, firestore }: HomeProps) {
                           transition={{ duration: 0.5, ease: 'easeInOut' }}
                           className="text-4xl sm:text-5xl font-bold tracking-tighter text-balance !leading-tight text-foreground absolute w-full"
                         >
-                          <span className="block text-4xl/[1.1] sm:text-5xl/[1.1]">
+                          <span className="block text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1]">
                             {headlines[headlineIndex].line1}
                           </span>
                           {headlines[headlineIndex].icon ? (
-                            <span className="flex items-center justify-center lg:justify-start flex-wrap text-4xl/[1.1] sm:text-5xl/[1.1]">
+                            <span className="flex items-center justify-center lg:justify-start flex-wrap text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1]">
                               <span className="text-primary">Linked</span>
                               <img src={linkedInIconUrl} alt="LinkedIn Icon" className="h-9 w-9 sm:h-12 sm:w-12 -mb-1"/>
                               <span className="ml-1 sm:ml-2">Formatting</span>
                               <span className="text-primary ml-1 sm:ml-2">Hub</span>
                             </span>
                           ) : (
-                             <span className="text-primary block text-4xl/[1.1] sm:text-5xl/[1.1]">
+                             <span className="text-primary block text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1]">
                                 {headlines[headlineIndex].line2}
                             </span>
                           )}
@@ -904,8 +901,6 @@ export default function Home({ auth, firestore }: HomeProps) {
                           </TooltipTrigger>
                           <TooltipContent><p>Numbered List</p></TooltipContent>
                         </Tooltip>
-                        <Separator orientation="vertical" className="h-6" />
-                        <EmojiPicker onEmojiClick={onEmojiClick} />
                     </div>
                     <div className="relative flex-1">
                             {isFormatting ? (
@@ -1029,9 +1024,9 @@ export default function Home({ auth, firestore }: HomeProps) {
                             {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.imageHint} data-ai-hint={avatar.imageHint} />}
                             <AvatarFallback><User className="h-6 w-6"/></AvatarFallback>
                             </Avatar>
-                            <div className="flex-1 overflow-hidden">
-                            <div className="flex items-center gap-1">
-                                <p className="font-semibold text-sm sm:text-base leading-tight cursor-pointer hover:underline" onClick={() => handlePreviewAction('View Profile')}>Imam Bello</p>
+                            <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                                <p className="font-semibold text-sm sm:text-base leading-tight cursor-pointer hover:underline" onClick={() => handlePreviewAction('View Profile')}>{randomName}</p>
                                 <span className='text-xs text-muted-foreground'>• 1st</span>
                             </div>
                             <p className="text-xs text-muted-foreground leading-tight cursor-pointer hover:underline truncate" onClick={() => handlePreviewAction('View Profile')}>
@@ -1096,7 +1091,7 @@ export default function Home({ auth, firestore }: HomeProps) {
                         <div className="px-4 py-1 flex items-center justify-between text-xs text-muted-foreground">
                             <div className='flex items-center gap-1 cursor-pointer hover:text-primary hover:underline'>
                                 <img src="https://static.licdn.com/aero-v1/sc/h/8ekq8gho1ruaf8i7f86vd1ftt" alt="like" className="w-4 h-4"/>
-                                <span>Imam Bello and 5 others</span>
+                                <span>{randomName} and 5 others</span>
                             </div>
                             <div className='flex items-center gap-2'>
                                 <span className='cursor-pointer hover:text-primary hover:underline'>1 comment</span>
@@ -1115,9 +1110,11 @@ export default function Home({ auth, firestore }: HomeProps) {
                             </Button>
                             <Button variant="ghost" className="flex-1 rounded-none text-muted-foreground font-semibold text-xs sm:text-sm" onClick={() => handlePreviewAction('Repost')}>
                             <Repeat2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Repost
-                            </Button>                         <Button variant="ghost" className="flex-1 rounded-none text-muted-foreground font-semibold text-xs sm:text-sm" onClick={() => handlePreviewAction('Send')}>
+                            </Button>
+                            <Button variant="ghost" className="flex-1 rounded-none text-muted-foreground font-semibold text-xs sm:text-sm" onClick={() => handlePreviewAction('Send')}>
                             <Send className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Send
-                            </Button>                      </div>
+                            </Button>
+                        </div>
                         </div>
                     </div>
                     </CardContent>
@@ -1150,3 +1147,5 @@ export default function Home({ auth, firestore }: HomeProps) {
     </TooltipProvider>
   );
 }
+
+    
