@@ -16,10 +16,11 @@ import {
   Linkedin,
 } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import useEmblaCarousel from 'embla-carousel-react';
 
 // Custom hook to trigger animations when an element is in view
 const useAnimateOnScroll = (ref: React.RefObject<HTMLElement>) => {
@@ -42,7 +43,49 @@ const AnimateOnScroll = ({ children, className, delay = 0 }: { children: React.R
   );
 };
 
+const heroImages = [
+  "65963.jpg",
+  "land.jpg",
+  "star.jpg",
+  "house.jpg",
+];
+
 const StoryPage = () => {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, []);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const scrollPrev = useCallback(() => {
+    if (emblaApi) emblaApi.scrollPrev()
+  }, [emblaApi])
+
+  const scrollNext = useCallback(() => {
+    if (emblaApi) emblaApi.scrollNext()
+  }, [emblaApi])
+
+  const scrollTo = useCallback((index: number) => {
+    if (emblaApi) emblaApi.scrollTo(index)
+  }, [emblaApi])
+
+
+  useEffect(() => {
+    if (!emblaApi) return
+
+    const onSelect = () => {
+      setSelectedIndex(emblaApi.selectedScrollSnap())
+    }
+
+    emblaApi.on('select', onSelect)
+    
+    const autoplay = setInterval(() => {
+      emblaApi.scrollNext();
+    }, 5000);
+
+    return () => {
+      emblaApi.off('select', onSelect);
+      clearInterval(autoplay);
+    }
+  }, [emblaApi])
+
   return (
     <div className="bg-neutral-950 text-neutral-50 w-full overflow-x-hidden selection:bg-white/20 selection:text-white">
       {/* Vertical Lines */}
@@ -80,9 +123,20 @@ const StoryPage = () => {
       <main>
         {/* Hero Section */}
         <header className="relative w-full h-screen overflow-hidden flex flex-col justify-end pb-12 md:pb-24">
-          <div className="absolute inset-0 z-0 bg-black">
-            <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop" className="w-full h-full object-cover animate-cinematic opacity-0" alt="Abstract data visualization" data-ai-hint="data visualization" />
+          <div className="absolute inset-0 z-0 bg-black overflow-hidden" ref={emblaRef}>
+            <div className="flex h-full">
+              {heroImages.map((src, index) => (
+                <div className="flex-grow-0 flex-shrink-0 w-full h-full min-w-0" key={index}>
+                   <img src={src} className="w-full h-full object-cover animate-cinematic opacity-0" alt="Abstract data visualization" data-ai-hint="data visualization" />
+                </div>
+              ))}
+            </div>
             <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/20 to-transparent opacity-80"></div>
+          </div>
+           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+            {heroImages.map((_, index) => (
+              <button key={index} onClick={() => scrollTo(index)} className={cn("w-2 h-2 rounded-full transition-colors", selectedIndex === index ? "bg-white" : "bg-white/20 hover:bg-white/50")}></button>
+            ))}
           </div>
 
           <div className="relative z-10 w-full max-w-[90rem] mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
@@ -138,7 +192,7 @@ const StoryPage = () => {
           <div className="w-full max-w-3xl mx-auto px-6 md:px-12 relative z-10 space-y-16">
             <AnimateOnScroll>
               <p className="text-xl md:text-2xl text-neutral-800 max-w-2xl mx-auto text-balance text-center font-light">
-                My name is <span className="font-medium text-black">Imam</span>. A software developer and tech enthusiast with a burning ambition: to build something that truly solves a problem.
+                My name is <span className="font-medium text-black">Bime</span>. A software developer and tech enthusiast with a burning ambition: to build something that truly solves a problem.
               </p>
             </AnimateOnScroll>
 
@@ -232,26 +286,26 @@ const StoryPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-black text-white py-16 px-6 border-t border-white/10 relative z-10">
+      <footer className="bg-background text-foreground border-t py-16 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
             <div className="col-span-1 md:col-span-2">
                 <div className="flex items-center gap-2 mb-6">
-                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black">
+                    <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground">
                          <img src="https://i.ibb.co/tPC17k0F/free-linkedin-logo-3d-icon-png-download-12257269.webp" alt="PostAI Logo" className="h-5 w-5" />
                     </div>
                     <h2 className="text-2xl font-bricolage font-semibold">PostAI</h2>
                 </div>
-                <p className="text-white/50 max-w-xs mb-8">
+                <p className="text-muted-foreground max-w-xs mb-8">
                    Clarity in every post. We build tools for the next generation of professional communication.
                 </p>
                 <div className="flex gap-2">
-                     <a href="https://github.com/bello-alternative/formatiq" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white hover:text-black transition-colors">
+                     <a href="https://github.com/bello-alternative/formatiq" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
                         <Github size={18}/>
                     </a>
-                     <a href="https://x.com/dev_imam" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white hover:text-black transition-colors">
+                     <a href="https://x.com/dev_imam" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
                         <Twitter size={18}/>
                     </a>
-                     <a href="https://www.linkedin.com/in/imam-bello" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white/70 hover:bg-white hover:text-black transition-colors">
+                     <a href="https://www.linkedin.com/in/imam-bello" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
                         <Linkedin size={18}/>
                     </a>
                 </div>
@@ -259,20 +313,20 @@ const StoryPage = () => {
             
             <div className="flex flex-col gap-4">
                 <h4 className="font-medium text-lg mb-2">PostAI</h4>
-                <Link href="/" className="text-white/60 hover:text-white transition-colors">Editor</Link>
-                <Link href="#story" className="text-white/60 hover:text-white transition-colors">Our Story</Link>
-                <Link href="#features" className="text-white/60 hover:text-white transition-colors">Features</Link>
+                <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">Editor</Link>
+                <Link href="#story" className="text-muted-foreground hover:text-primary transition-colors">Our Story</Link>
+                <Link href="#features" className="text-muted-foreground hover:text-primary transition-colors">Features</Link>
             </div>
             
              <div className="flex flex-col gap-4">
                 <h4 className="font-medium text-lg mb-2">Connect</h4>
-                <a href="https://github.com/bello-alternative/formatiq" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white transition-colors">GitHub</a>
-                <a href="https://www.linkedin.com/in/imam-bello" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white transition-colors">LinkedIn</a>
-                 <a href="https://chat.whatsapp.com/CbCQukJJUBIJv3hbx7Qin1" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white transition-colors">WhatsApp</a>
+                <a href="https://github.com/bello-alternative/formatiq" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">GitHub</a>
+                <a href="https://www.linkedin.com/in/imam-bello" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">LinkedIn</a>
+                 <a href="https://chat.whatsapp.com/CbCQukJJUBIJv3hbx7Qin1" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">WhatsApp</a>
             </div>
         </div>
         
-        <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center text-sm text-white/40">
+        <div className="max-w-7xl mx-auto mt-16 pt-8 border-t flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
             <p>© {new Date().getFullYear()} PostAI. Built by Imam Bello.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
                 <p>All rights reserved.</p>
