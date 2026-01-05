@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useUser } from '@/firebase/auth/use-user';
 
 interface LoginPageProps {
   auth: Auth | null;
@@ -23,6 +24,7 @@ const AdminLoginPage = ({ auth }: LoginPageProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useUser(auth);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,10 +56,10 @@ const AdminLoginPage = ({ auth }: LoginPageProps) => {
   
   // Redirect if already logged in
   useEffect(() => {
-    if (auth?.currentUser?.email === 'belloimam431@gmail.com') {
+    if (user?.email === 'belloimam431@gmail.com') {
       router.push('/admin-imam');
     }
-  }, [auth, router]);
+  }, [user, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">

@@ -77,6 +77,7 @@ import {
   Type
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import Confetti from 'react-confetti';
 import { 
   UNICODE_MAPS,
   convertTextToUnicode,
@@ -264,6 +265,8 @@ export default function Home({ auth, firestore }: HomeProps) {
   const { user, loading: userLoading } = useUser(auth);
   const [randomImageUrl, setRandomImageUrl] = useState('');
 
+  const [showConfetti, setShowConfetti] = useState(false);
+
   useEffect(() => {
     setIsClient(true);
     const postImages = PlaceHolderImages.filter(img => img.id.startsWith('postImage_'));
@@ -393,6 +396,9 @@ export default function Home({ auth, firestore }: HomeProps) {
                 editorRef.current.innerHTML = processedHtml;
             }
 
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 5000); // Confetti for 5 seconds
+
             setTimeout(() => {
                 setFormattingStep('');
             }, 500);
@@ -434,6 +440,8 @@ export default function Home({ auth, firestore }: HomeProps) {
     const range = selection.getRangeAt(0);
     const selectedText = range.toString();
 
+    if (!selectedText) return; // Don't do anything if no text is selected
+
     if (command === 'unicode' && value) {
         // Revert any existing unicode back to normal text first
         const revertedText = convertUnicodeToText(selectedText);
@@ -442,19 +450,27 @@ export default function Home({ auth, firestore }: HomeProps) {
         if (value === 'NORMAL') {
             newText = revertedText;
         } else {
-            newText = convertTextToUnicode(revertedText, value);
+            const map = UNICODE_MAPS[value as keyof typeof UNICODE_MAPS];
+            newText = convertTextToUnicode(revertedText, map || {});
         }
         
-        // Use insertHTML to ensure it's part of the undo stack
-        document.execCommand('insertHTML', false, `<span data-font-style="${value}">${newText}</span>`);
+        range.deleteContents();
+        const span = document.createElement('span');
+        if (value !== 'NORMAL') {
+            span.setAttribute('data-font-style', value);
+        }
+        span.textContent = newText;
+        range.insertNode(span);
+        // Collapse the range to the end of the inserted content
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
 
     } else if (command === 'uppercase') {
-        if (!selectedText) return;
         const uppercasedText = selectedText.toUpperCase();
         document.execCommand('insertText', false, uppercasedText);
 
     } else if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
-        if (!selectedText) return;
         const prefix = command === 'insertUnorderedList' ? '• ' : '1. ';
         document.execCommand('insertHTML', false, `<div>${prefix}${selectedText}</div>`);
 
@@ -737,7 +753,15 @@ export default function Home({ auth, firestore }: HomeProps) {
   return (
     <TooltipProvider>
        <div className={cn('flex min-h-dvh w-full flex-col font-inter')}>
-        
+        {showConfetti && (
+            <Confetti
+              recycle={false}
+              numberOfPieces={200}
+              gravity={0.1}
+              colors={['#0A66C2', '#FFFFFF', '#000000', '#2867B2']}
+              style={{ position: 'fixed', zIndex: 9999 }}
+            />
+          )}
         <SiteHeader />
 
         <main className="flex-1">

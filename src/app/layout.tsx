@@ -49,7 +49,7 @@ export default function RootLayout({
       // Cloning the element and adding the props.
       // Note: This assumes the direct child component can accept these props.
       // This is a common pattern for passing down "global" instances.
-      return React.cloneElement(child as React.ReactElement<any>, { ...firebaseInstances });
+      return React.cloneElement(child as React.ReactElement<any>, { ...firebaseInstances, ...child.props });
     }
     return child;
   });
@@ -60,7 +60,7 @@ export default function RootLayout({
         <title>PostAI - AI-Powered LinkedIn Content Formatting</title>
         <meta name="description" content="Instantly format your LinkedIn posts for maximum readability and engagement. Our AI adds smart line breaks, highlights key phrases, and analyzes your content for tone and clarity." />
         <meta name="keywords" content="LinkedIn formatting, AI content formatter, social media tool, content marketing, post optimizer, text formatter" />
-        <link rel="icon" href="/icon.png" />
+        <link rel="icon" href="/icon.webp" />
       </head>
       <body className={`font-inter antialiased`} data-background="grid">
         <NextTopLoader
@@ -80,7 +80,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {firebaseInstances ? childrenWithProps : <div>Loading Firebase...</div>}
+          {firebaseInstances ? childrenWithProps : null}
           <Toaster />
         </ThemeProvider>
       </body>
