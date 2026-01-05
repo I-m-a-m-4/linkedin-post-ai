@@ -749,7 +749,7 @@ export default function Home() {
                         </div>
                         <p className="text-sm text-muted-foreground">Used by 10,000+ professionals</p>
                     </div>
-                    <div className="relative h-28 overflow-hidden">
+                    <div className="relative h-32 overflow-hidden">
                       <AnimatePresence mode="wait">
                         <motion.h1
                           key={headlineIndex}
@@ -757,17 +757,17 @@ export default function Home() {
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 50 }}
                           transition={{ duration: 0.5, ease: 'easeInOut' }}
-                          className="text-4xl font-bold tracking-tighter text-balance sm:text-5xl !leading-tight text-foreground absolute w-full"
+                          className="text-4xl sm:text-5xl font-bold tracking-tighter text-balance !leading-tight text-foreground absolute w-full"
                         >
                           <span className="block">
                             {headlines[headlineIndex].line1}
                           </span>
                           {headlines[headlineIndex].icon ? (
-                            <span className="flex items-center justify-center lg:justify-start">
+                            <span className="flex items-center justify-center lg:justify-start flex-wrap">
                               <span className="text-primary">Linked</span>
-                              <img src={linkedInIconUrl} alt="LinkedIn Icon" className="h-10 w-10 sm:h-12 sm:w-12 -mb-1"/>
-                              <span className="ml-2">Formatting</span>
-                              <span className="text-primary ml-2">Hub</span>
+                              <img src={linkedInIconUrl} alt="LinkedIn Icon" className="h-9 w-9 sm:h-12 sm:w-12 -mb-1"/>
+                              <span className="ml-1 sm:ml-2">Formatting</span>
+                              <span className="text-primary ml-1 sm:ml-2">Hub</span>
                             </span>
                           ) : (
                              <span className="text-primary block">
@@ -920,8 +920,8 @@ export default function Home() {
                         </div>
                     </CardContent>
                     <CardFooter className="flex-col items-start gap-4">
-                        <div className="flex w-full flex-wrap justify-between items-center gap-4">
-                            <div className="flex items-center gap-4">
+                        <div className="flex w-full flex-col sm:flex-row sm:flex-wrap justify-between items-center gap-4">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <div className="flex items-center gap-2 text-sm cursor-pointer">
@@ -963,14 +963,15 @@ export default function Home() {
                                     </TooltipContent>
                                 </Tooltip>
                             </div>
-                            <div className='flex items-center gap-2'>
-                            <Button variant="secondary" onClick={handleCopyToClipboard}>
+                            <div className='flex w-full sm:w-auto items-center gap-2'>
+                            <Button variant="secondary" onClick={handleCopyToClipboard} className="w-full sm:w-auto">
                                 <ClipboardCopy className="mr-2 h-4 w-4" />
-                                Copy to Clipboard
+                                Copy
                             </Button>
                             <Button
                                 onClick={handleAutoFormat}
                                 disabled={isFormatting}
+                                className="w-full sm:w-auto"
                             >
                                 {isFormatting ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -990,7 +991,7 @@ export default function Home() {
                 <div className="w-full md:w-1/2 flex flex-col">
                 <Card className="flex flex-col h-full bg-card/80 backdrop-blur-sm shadow-2xl transition-all duration-300 hover:shadow-primary/10" style={{'--tw-shadow-color': 'hsl(var(--primary) / 0.1)', boxShadow: '0 0 0 1px hsl(var(--border)), 0 10px 30px -10px var(--tw-shadow-color)'}}>
                     <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                         <div className="flex-1">
                             <CardTitle>Live Preview</CardTitle>
                             <CardDescription>
@@ -1026,10 +1027,10 @@ export default function Home() {
                             </Avatar>
                             <div className="flex-1 overflow-hidden">
                             <div className="flex items-center gap-1">
-                                <p className="font-semibold text-base leading-tight cursor-pointer hover:underline" onClick={() => handlePreviewAction('View Profile')}>Imam Bello</p>
+                                <p className="font-semibold text-sm sm:text-base leading-tight cursor-pointer hover:underline" onClick={() => handlePreviewAction('View Profile')}>Imam Bello</p>
                                 <span className='text-xs text-muted-foreground'>• 1st</span>
                             </div>
-                            <p className="text-xs text-muted-foreground leading-tight cursor-pointer hover:underline truncate sm:text-wrap sm:overflow-visible" onClick={() => handlePreviewAction('View Profile')}>
+                            <p className="text-xs text-muted-foreground leading-tight cursor-pointer hover:underline truncate" onClick={() => handlePreviewAction('View Profile')}>
                                 AI Tinkerer & Overthinker. I build tools that help clarify big ideas.
                             </p>
                             <p className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer" onClick={() => handlePreviewAction('Timestamp')}>
@@ -1037,7 +1038,7 @@ export default function Home() {
                             </p>
                             </div>
                             <div className="flex items-center">
-                            <Button variant="outline" size="sm" className="mr-2 text-primary border-primary hover:bg-primary/10">
+                            <Button variant="outline" size="sm" className="mr-2 text-primary border-primary hover:bg-primary/10 hidden sm:flex">
                                 + Follow
                             </Button>
                             <MoreHorizontal className="h-5 w-5 text-muted-foreground cursor-pointer" />
@@ -1102,16 +1103,16 @@ export default function Home() {
 
                         <div className="border-t border-border mt-1 mx-4">
                         <div className="flex justify-around">
-                            <Button variant="ghost" className="flex-1 rounded-none text-muted-foreground font-semibold" onClick={() => handlePreviewAction('Like')}>
-                            <ThumbsUp className="mr-2 h-5 w-5" /> Like
+                            <Button variant="ghost" className="flex-1 rounded-none text-muted-foreground font-semibold text-xs sm:text-sm" onClick={() => handlePreviewAction('Like')}>
+                            <ThumbsUp className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Like
                             </Button>
-                            <Button variant="ghost" className="flex-1 rounded-none text-muted-foreground font-semibold" onClick={() => handlePreviewAction('Comment')}>
-                            <MessageCircle className="mr-2 h-5 w-5" /> Comment
+                            <Button variant="ghost" className="flex-1 rounded-none text-muted-foreground font-semibold text-xs sm:text-sm" onClick={() => handlePreviewAction('Comment')}>
+                            <MessageCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Comment
                             </Button>
-                            <Button variant="ghost" className="flex-1 rounded-none text-muted-foreground font-semibold" onClick={() => handlePreviewAction('Repost')}>
-                            <Repeat2 className="mr-2 h-5 w-5" /> Repost
-                            </Button>                         <Button variant="ghost" className="flex-1 rounded-none text-muted-foreground font-semibold" onClick={() => handlePreviewAction('Send')}>
-                            <Send className="mr-2 h-5 w-5" /> Send
+                            <Button variant="ghost" className="flex-1 rounded-none text-muted-foreground font-semibold text-xs sm:text-sm" onClick={() => handlePreviewAction('Repost')}>
+                            <Repeat2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Repost
+                            </Button>                         <Button variant="ghost" className="flex-1 rounded-none text-muted-foreground font-semibold text-xs sm:text-sm" onClick={() => handlePreviewAction('Send')}>
+                            <Send className="mr-2 h-4 w-4 sm:h-5 sm:w-5" /> Send
                             </Button>                      </div>
                         </div>
                     </div>
@@ -1145,3 +1146,5 @@ export default function Home() {
     </TooltipProvider>
   );
 }
+
+    
