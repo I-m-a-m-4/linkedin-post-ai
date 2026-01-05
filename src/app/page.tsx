@@ -43,7 +43,8 @@ import { useUser } from '@/firebase/auth/use-user';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { addDoc, collection, serverTimestamp, Auth, Firestore } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, Firestore } from 'firebase/firestore';
+import { Auth, signInAnonymously } from 'firebase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bold,
@@ -315,19 +316,29 @@ export default function Home({ auth, firestore }: HomeProps) {
 
 
   const trackEvent = useCallback(async () => {
-    if (user && firestore) {
-      try {
+    if (!auth || !firestore) return;
+    let currentUser = auth.currentUser;
+    if (!currentUser) {
+        try {
+            const userCredential = await signInAnonymously(auth);
+            currentUser = userCredential.user;
+        } catch (error) {
+            console.error("Anonymous sign-in failed:", error);
+            return;
+        }
+    }
+    
+    try {
         const eventsCollection = collection(firestore, 'analyticsEvents');
         await addDoc(eventsCollection, {
-            userId: user.uid,
+            userId: currentUser.uid,
             eventType: 'autoFormatClick',
             timestamp: serverTimestamp(),
         });
-      } catch (error) {
-          console.error("Error tracking event:", error);
-      }
+    } catch (error) {
+        console.error("Error tracking event:", error);
     }
-  }, [user, firestore]);
+}, [auth, firestore]);
 
   const handleAutoFormat = useCallback(() => {
     const rawText = editorRef.current?.innerText || '';
@@ -566,16 +577,27 @@ export default function Home({ auth, firestore }: HomeProps) {
         toast({ title: "Please enter a review before submitting.", variant: "destructive" });
         return;
     }
-    if (!firestore || !user) {
-        toast({ title: "You must be logged in to leave a review.", variant: "destructive" });
+    if (!auth || !firestore) {
+        toast({ title: "Could not connect to the service. Please try again.", variant: "destructive" });
         return;
     }
 
     setIsSubmittingReview(true);
     try {
+        let currentUser = auth.currentUser;
+        // If no user, sign in anonymously
+        if (!currentUser) {
+            const userCredential = await signInAnonymously(auth);
+            currentUser = userCredential.user;
+        }
+
+        if (!currentUser) {
+            throw new Error("Could not authenticate user.");
+        }
+
         const reviewsCollection = collection(firestore, 'reviews');
         await addDoc(reviewsCollection, {
-            userId: user.uid,
+            userId: currentUser.uid,
             review: reviewText,
             timestamp: serverTimestamp(),
         });
@@ -1147,5 +1169,7 @@ export default function Home({ auth, firestore }: HomeProps) {
     </TooltipProvider>
   );
 }
+
+    
 
     
