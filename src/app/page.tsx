@@ -562,53 +562,37 @@ export default function Home() {
       toast({ title: "Please enter a review before submitting.", variant: "destructive" });
       return;
     }
-    if (!firestore || !auth) {
-      toast({ title: "Database not ready, please wait a moment.", variant: "destructive" });
-      return;
+    if (!firestore || !auth || !user) {
+        toast({ title: "You must be logged in to leave a review.", variant: "destructive" });
+        return;
     }
-  
-    if (userLoading) {
-      toast({ title: "Please wait a moment...", description: "User session is initializing." });
-      return;
-    }
-  
-    let currentUser = user;
-  
+
     setIsSubmittingReview(true);
-  
+
     try {
-      if (!currentUser) {
-        const userCredential = await signInAnonymously(auth);
-        currentUser = userCredential.user;
-      }
-  
-      if (currentUser) {
         const reviewsCollection = collection(firestore, 'reviews');
         await addDoc(reviewsCollection, {
-          userId: currentUser.uid,
-          review: reviewText,
-          timestamp: serverTimestamp(),
+            userId: user.uid,
+            review: reviewText,
+            timestamp: serverTimestamp(),
         });
         toast({
-          title: "Thank you for your feedback!",
-          description: "Your review has been submitted successfully.",
-          variant: "success",
+            title: "Thank you for your feedback!",
+            description: "Your review has been submitted successfully.",
+            variant: "success",
         });
         setReviewText('');
-      } else {
-        throw new Error("User is not authenticated.");
-      }
     } catch (error) {
-      console.error("Error submitting review:", error);
-      toast({
-        title: "Submission Failed",
-        description: "Could not submit your review. Please try again.",
-        variant: "destructive",
-      });
+        console.error("Error submitting review:", error);
+        toast({
+            title: "Submission Failed",
+            description: "Could not submit your review. Please try again.",
+            variant: "destructive",
+        });
     } finally {
-      setIsSubmittingReview(false);
+        setIsSubmittingReview(false);
     }
-  };
+};
 
   const handleFeatureBoxClick = (feature: FeatureKey) => {
     setSelectedFeature(feature);

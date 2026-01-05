@@ -25,18 +25,8 @@ function AuthHandler({ children }: { children: ReactNode }) {
   const { user, loading } = useUser();
 
   useEffect(() => {
-    const handleAnonymousSignIn = async () => {
-      if (!loading && !user) {
-        try {
-          await signInAnonymously(auth);
-        } catch (error) {
-          // This error is expected if anonymous sign-in is disabled in the Firebase console.
-          // We can safely ignore it and the user will proceed without an anonymous identity.
-          console.warn('Anonymous sign-in failed. This may be due to project settings. The user will proceed without an anonymous identity.', error);
-        }
-      }
-    };
-    handleAnonymousSignIn();
+    // We are no longer signing users in anonymously automatically.
+    // This will be handled by specific actions, like submitting a review.
   }, [user, loading]);
 
   return <>{children}</>;
