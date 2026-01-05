@@ -195,3 +195,48 @@ body[data-background="aurora"]::before {
     transform: rotateY(360deg);
   }
 }
+
+/* Added for Story Page Redesign */
+@layer base {
+  .font-bricolage { 
+    font-family: 'Bricolage Grotesque', sans-serif !important;
+  }
+
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer utilities {
+  .animate-cinematic {
+    animation: cinematicEntrance 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUpFade 1s ease-out forwards;
+  }
+  
+  .animate-on-scroll {
+    animation: animationIn 0.8s ease-out both;
+    animation-play-state: paused;
+  }
+  .animate-on-scroll.is-in-view {
+     animation-play-state: running;
+  }
+}
+
+@keyframes cinematicEntrance {
+  0% { transform: scale(1.4); filter: blur(20px) grayscale(100%); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: scale(1); filter: blur(0px) grayscale(0%); opacity: 1; }
+}
+
+@keyframes slideUpFade {
+  0% { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes animationIn {
+  0% { opacity: 0; transform: translateY(30px); filter: blur(8px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0px); }
+}
