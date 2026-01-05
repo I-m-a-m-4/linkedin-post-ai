@@ -435,48 +435,37 @@ export default function Home({ auth, firestore }: HomeProps) {
     editorRef.current.focus();
   
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
   
-    const range = selection.getRangeAt(0);
-    const selectedText = range.toString();
+    const selectedText = selection.toString();
+    if (!selectedText) return;
 
-    if (!selectedText) return; // Don't do anything if no text is selected
-
+    // First, always convert any special unicode back to normal text
+    const plainText = convertUnicodeToText(selectedText);
+    let newText = plainText;
+    let newHtml = '';
+  
     if (command === 'unicode' && value) {
-        // Revert any existing unicode back to normal text first
-        const revertedText = convertUnicodeToText(selectedText);
-        
-        let newText;
-        if (value === 'NORMAL') {
-            newText = revertedText;
-        } else {
-            const map = UNICODE_MAPS[value as keyof typeof UNICODE_MAPS];
-            newText = convertTextToUnicode(revertedText, map || {});
-        }
-        
-        range.deleteContents();
-        const span = document.createElement('span');
-        if (value !== 'NORMAL') {
-            span.setAttribute('data-font-style', value);
-        }
-        span.textContent = newText;
-        range.insertNode(span);
-        // Collapse the range to the end of the inserted content
-        range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
-
+      if (value !== 'NORMAL') {
+        const map = UNICODE_MAPS[value as keyof typeof UNICODE_MAPS];
+        newText = convertTextToUnicode(plainText, map || {});
+      }
+      newHtml = newText.replace(/\n/g, '<br>');
     } else if (command === 'uppercase') {
-        const uppercasedText = selectedText.toUpperCase();
-        document.execCommand('insertText', false, uppercasedText);
-
-    } else if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
-        const prefix = command === 'insertUnorderedList' ? '• ' : '1. ';
-        document.execCommand('insertHTML', false, `<div>${prefix}${selectedText}</div>`);
-
+      newText = plainText.toUpperCase();
+      newHtml = newText.replace(/\n/g, '<br>');
     } else {
-        document.execCommand(command, false, value);
+      // For standard commands, let execCommand handle it directly.
+      // This is better for undo/redo stack.
+      document.execCommand(command, false, value);
+      if (editorRef.current) {
+        setText(editorRef.current.innerHTML);
+      }
+      return;
     }
+    
+    // For custom commands, use insertHTML to maintain undo history
+    document.execCommand('insertHTML', false, newHtml);
       
     if (editorRef.current) {
       setText(editorRef.current.innerHTML);
@@ -707,21 +696,6 @@ export default function Home({ auth, firestore }: HomeProps) {
     }, 4000); // Change every 4 seconds
     return () => clearInterval(interval);
   }, [headlines.length]);
-
-  if (!isClient) {
-    return (
-      <div className="flex min-h-dvh w-full flex-col font-inter">
-        <SiteHeader />
-        <main className="flex-1">
-          <section id="hero" className="container mx-auto grid grid-cols-1 items-center gap-12 px-4 py-20 text-center lg:grid-cols-2 lg:py-32 lg:text-left">
-            <Skeleton className="h-[300px] w-full" />
-            <Skeleton className="h-[300px] w-full" />
-          </section>
-        </main>
-        <SiteFooter reviewText="" setReviewText={() => {}} isSubmittingReview={false} userLoading={true} handleSubmitReview={() => {}} />
-      </div>
-    );
-  }
   
   const heroAvatars = [
     { src: 'https://framerusercontent.com/images/OU6tHYe85VEE5Z13XvUV6PlrvvE.png?width=80&height=80', alt: 'User 1' },
@@ -759,7 +733,8 @@ export default function Home({ auth, firestore }: HomeProps) {
               numberOfPieces={200}
               gravity={0.1}
               colors={['#0A66C2', '#FFFFFF', '#000000', '#2867B2']}
-              style={{ position: 'fixed', zIndex: 9999 }}
+              style={{ position: 'fixed', zIndex: 9999, bottom: 0, right: 0, width: '100%', height: '100%' }}
+              origin={{ x: 0.5, y: 1 }}
             />
           )}
         <SiteHeader />
@@ -788,18 +763,18 @@ export default function Home({ auth, firestore }: HomeProps) {
                           transition={{ duration: 0.5, ease: 'easeInOut' }}
                           className="text-4xl sm:text-5xl font-bold tracking-tighter text-balance !leading-tight text-foreground absolute w-full"
                         >
-                          <span className="block">
+                          <span className="block text-4xl/[1.1] sm:text-5xl/[1.1]">
                             {headlines[headlineIndex].line1}
                           </span>
                           {headlines[headlineIndex].icon ? (
-                            <span className="flex items-center justify-center lg:justify-start flex-wrap">
+                            <span className="flex items-center justify-center lg:justify-start flex-wrap text-4xl/[1.1] sm:text-5xl/[1.1]">
                               <span className="text-primary">Linked</span>
                               <img src={linkedInIconUrl} alt="LinkedIn Icon" className="h-9 w-9 sm:h-12 sm:w-12 -mb-1"/>
                               <span className="ml-1 sm:ml-2">Formatting</span>
                               <span className="text-primary ml-1 sm:ml-2">Hub</span>
                             </span>
                           ) : (
-                             <span className="text-primary block">
+                             <span className="text-primary block text-4xl/[1.1] sm:text-5xl/[1.1]">
                                 {headlines[headlineIndex].line2}
                             </span>
                           )}
@@ -992,7 +967,7 @@ export default function Home({ auth, firestore }: HomeProps) {
                                     </TooltipContent>
                                 </Tooltip>
                             </div>
-                            <div className='flex w-full sm:w-auto items-center gap-2'>
+                            <div className='flex w-full sm:w-auto items-center gap-2 flex-col sm:flex-row'>
                             <Button variant="secondary" onClick={handleCopyToClipboard} className="w-full sm:w-auto">
                                 <ClipboardCopy className="mr-2 h-4 w-4" />
                                 Copy
