@@ -231,57 +231,6 @@ export default function Home({ auth, firestore }: HomeProps) {
 
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     const editor = e.currentTarget;
-    const linkRegex = /(https?:\/\/[^\s]+)/g;
-    
-    // This is a naive implementation and can be slow on large content.
-    // For production apps, consider a more robust library or approach.
-    if (editor.innerText.match(linkRegex)) {
-        const selection = window.getSelection();
-        const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = editor.innerHTML;
-        
-        const walker = document.createTreeWalker(tempDiv, Node.TEXT_NODE);
-        let node;
-        const nodesToReplace: { parent: Node, oldNode: Node, newContent: DocumentFragment }[] = [];
-
-        while(node = walker.nextNode()) {
-            if (node.parentElement?.tagName === 'A') continue;
-
-            const matches = node.textContent?.match(linkRegex);
-            if(matches) {
-                const fragment = document.createDocumentFragment();
-                let lastIndex = 0;
-                matches.forEach(match => {
-                    const urlIndex = node.textContent!.indexOf(match, lastIndex);
-                    fragment.appendChild(document.createTextNode(node.textContent!.substring(lastIndex, urlIndex)));
-                    const anchor = document.createElement('a');
-                    anchor.href = match;
-                    anchor.textContent = match;
-                    anchor.target = "_blank";
-                    fragment.appendChild(anchor);
-                    lastIndex = urlIndex + match.length;
-                });
-                fragment.appendChild(document.createTextNode(node.textContent!.substring(lastIndex)));
-                
-                if (node.parentNode) {
-                    nodesToReplace.push({ parent: node.parentNode, oldNode: node, newContent: fragment });
-                }
-            }
-        }
-
-        if (nodesToReplace.length > 0) {
-            nodesToReplace.forEach(({parent, oldNode, newContent}) => {
-                parent.replaceChild(newContent, oldNode);
-            });
-            editor.innerHTML = tempDiv.innerHTML;
-            if (range && selection) {
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-        }
-    }
-    
     setText(editor.innerHTML);
   };
   
@@ -380,18 +329,23 @@ export default function Home({ auth, firestore }: HomeProps) {
             // Process special styles first
             let processedHtml = formattedText
               .replace(/~~(.*?)~~/g, '<s>$1</s>') // Strikethrough
-              .replace(/__(.*?)__/g, '<u>$1</u>') // Underline
-              .replace(/\*\*(.*?)\*\*/g, (match, p1) => {
-                  const styledText = convertTextToUnicode(p1, UNICODE_MAPS.SERIF_BOLD);
-                  return `<span data-font-style="SERIF_BOLD">${styledText}</span>`;
-              });
+              .replace(/__(.*?)__/g, '<u>$1</u>'); // Underline
 
+            // Handle links first to wrap them in <a> tags
+            const linkRegex = /(https?:\/\/[^\s]+)/g;
+            processedHtml = processedHtml.replace(linkRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+
+            // Then handle bolding with standard <strong> tags
+             processedHtml = processedHtml.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
             // Handle lists and paragraphs
             processedHtml = processedHtml
               .split('\n')
               .map(line => {
                 const trimmedLine = line.trim();
+                 if (trimmedLine.startsWith('-> ')) {
+                    return `<div>&rightarrow; ${trimmedLine.substring(3)}</div>`;
+                }
                 if (trimmedLine.startsWith('* ')) {
                   return `<div>• ${trimmedLine.substring(2)}</div>`;
                 }
@@ -574,50 +528,48 @@ export default function Home({ auth, firestore }: HomeProps) {
 
   const handleSubmitReview = async () => {
     if (!reviewText.trim()) {
-        toast({ title: "Please enter a review before submitting.", variant: "destructive" });
-        return;
+      toast({ title: 'Please enter a review before submitting.', variant: 'destructive' });
+      return;
     }
     if (!auth || !firestore) {
-        toast({ title: "Could not connect to the service. Please try again.", variant: "destructive" });
-        return;
+      toast({ title: "Could not connect to the service. Please try again.", variant: 'destructive' });
+      return;
     }
-
+  
     setIsSubmittingReview(true);
     try {
-        let currentUser = auth.currentUser;
-        // If no user, sign in anonymously
-        if (!currentUser) {
-            const userCredential = await signInAnonymously(auth);
-            currentUser = userCredential.user;
-        }
-
-        if (!currentUser) {
-            throw new Error("Could not authenticate user.");
-        }
-
-        const reviewsCollection = collection(firestore, 'reviews');
-        await addDoc(reviewsCollection, {
-            userId: currentUser.uid,
-            review: reviewText,
-            timestamp: serverTimestamp(),
-        });
-        toast({
-            title: "Thank you for your feedback!",
-            description: "Your review has been submitted successfully.",
-            variant: "success",
-        });
-        setReviewText('');
+      // Ensure user is signed in anonymously before proceeding
+      let currentUser = auth.currentUser;
+      if (!currentUser) {
+        const userCredential = await signInAnonymously(auth);
+        currentUser = userCredential.user;
+      }
+      
+      // Now that we're sure we have a user, submit the review
+      const reviewsCollection = collection(firestore, 'reviews');
+      await addDoc(reviewsCollection, {
+        userId: currentUser.uid,
+        review: reviewText,
+        timestamp: serverTimestamp(),
+      });
+  
+      toast({
+        title: 'Thank you for your feedback!',
+        description: 'Your review has been submitted successfully.',
+        variant: 'success',
+      });
+      setReviewText('');
     } catch (error) {
-        console.error("Error submitting review:", error);
-        toast({
-            title: "Submission Failed",
-            description: "Could not submit your review. Please try again.",
-            variant: "destructive",
-        });
+      console.error('Error submitting review:', error);
+      toast({
+        title: 'Submission Failed',
+        description: 'Could not submit your review. Please try again.',
+        variant: 'destructive',
+      });
     } finally {
-        setIsSubmittingReview(false);
+      setIsSubmittingReview(false);
     }
-};
+  };
 
 
   const handleFeatureBoxClick = (feature: FeatureKey) => {
@@ -726,7 +678,7 @@ export default function Home({ auth, firestore }: HomeProps) {
 
   const linkedInIconUrl = 'https://i.ibb.co/tPC17k0F/free-linkedin-logo-3d-icon-png-download-12257269.webp';
 
-  const CurrentFeatureIcon = selectedFeature ? featureDetails[selectedFeature].Icon : null;
+  const CurrentFeatureIcon = selectedFeature ? featureDetails[selectedFeature!].Icon : null;
 
   const fontStyleOptions = [
     { name: 'Normal', value: 'NORMAL', style: {} },
@@ -1173,3 +1125,4 @@ export default function Home({ auth, firestore }: HomeProps) {
     
 
     
+

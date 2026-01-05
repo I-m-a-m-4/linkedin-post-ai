@@ -18,7 +18,7 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, auth }: AdminLayoutProps) {
   // useAuthState requires a valid Auth instance. If it's null, we can't proceed.
-  const [user, loading] = useAuthState(auth!);
+  const [user, loading] = useAuthState(auth ?? undefined);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -84,5 +84,8 @@ export default function AdminLayout({ children, auth }: AdminLayoutProps) {
     );
   }
 
+  // If user is not admin but trying to access a protected route, show loading or redirect.
+  // The useEffect handles the redirect logic, so returning null here is fine
+  // while waiting for the redirect to happen.
   return null;
 }
