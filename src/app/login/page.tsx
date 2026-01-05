@@ -1,58 +1,78 @@
+
 'use client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+
+import { useState } from 'react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { Chrome } from 'lucide-react';
-import { useEffect } from 'react';
-import { useUser } from '@/firebase';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default function LoginPage() {
-  const auth = useAuth();
-  const { user, loading } = useUser();
+const AdminLoginPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { toast } = useToast();
 
-  useEffect(() => {
-    // Redirect if user is already logged in
-    if (!loading && user) {
-      router.push('/admin-imam');
-    }
-  }, [user, loading, router]);
-
-  const handleGoogleSignIn = async () => {
-    if (!auth) return;
-    const provider = new GoogleAuthProvider();
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
     try {
-      await signInWithPopup(auth, provider);
-      // On successful sign-in, the useEffect will trigger the redirect.
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({ title: 'Login Successful', description: 'Redirecting to dashboard...' });
+      router.push('/admin-imam');
+    } catch (err: any) {
+      setError(err.message);
+      toast({
+        title: 'Login Failed',
+        description: err.message,
+        variant: 'destructive',
+      });
     }
   };
 
-  if (loading || user) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <p>Redirecting...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle>Admin Access</CardTitle>
-          <CardDescription>Sign in to view the dashboard.</CardDescription>
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Admin Login</CardTitle>
+          <CardDescription>Enter your credentials to access the dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={handleGoogleSignIn} className="w-full">
-            <Chrome className="mr-2 h-4 w-4" />
-            Sign in with Google
-          </Button>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="w-full">
+              Login
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
   );
-}
+};
+
+export default AdminLoginPage;

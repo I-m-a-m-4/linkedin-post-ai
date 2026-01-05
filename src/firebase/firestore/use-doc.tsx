@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { doc, onSnapshot, DocumentReference, DocumentData } from 'firebase/firestore';
-import { useFirestore } from '../provider';
+import { firestore } from '..';
 
 interface UseDoc<T> {
   data: T | null;
@@ -11,7 +11,6 @@ interface UseDoc<T> {
 }
 
 export function useDoc<T extends DocumentData>(pathOrRef: string | DocumentReference): UseDoc<T> {
-  const firestore = useFirestore();
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -38,7 +37,7 @@ export function useDoc<T extends DocumentData>(pathOrRef: string | DocumentRefer
     );
 
     return () => unsubscribe();
-  }, [firestore, pathOrRef]);
+  }, [pathOrRef]);
 
   return { data, loading, error };
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { useAuth } from '../provider';
+import { auth } from '..';
 
 interface UseUser {
   user: User | null;
@@ -10,8 +10,7 @@ interface UseUser {
 }
 
 export function useUser(): UseUser {
-  const auth = useAuth();
-  const [user, setUser] = useState<User | null>(auth.currentUser);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,7 +20,7 @@ export function useUser(): UseUser {
     });
 
     return () => unsubscribe();
-  }, [auth]);
+  }, []);
 
   return { user, loading };
 }

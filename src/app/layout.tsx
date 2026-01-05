@@ -1,10 +1,10 @@
+
 import type {Metadata} from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/app/theme-provider';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 import NextTopLoader from 'nextjs-toploader';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description: 'Instantly format your LinkedIn posts for maximum readability and engagement. Our AI adds smart line breaks, highlights key phrases, and analyzes your content for tone and clarity.',
   keywords: ['LinkedIn formatting', 'AI content formatter', 'social media tool', 'content marketing', 'post optimizer', 'text formatter'],
   icons: {
-    icon: '/icon.webp',
+    icon: '/icon.png',
   },
 };
 
@@ -42,12 +42,11 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
-          <FirebaseClientProvider>
-            {children}
-            <Toaster />
-          </FirebaseClientProvider>
+          {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

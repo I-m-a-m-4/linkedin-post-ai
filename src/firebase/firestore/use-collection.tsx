@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, Query, DocumentData, QuerySnapshot } from 'firebase/firestore';
-import { useFirestore } from '../provider';
+import { firestore } from '..';
 
 interface UseCollection<T> {
   data: T[] | null;
@@ -11,7 +11,6 @@ interface UseCollection<T> {
 }
 
 export function useCollection<T extends DocumentData>(pathOrQuery: string | Query): UseCollection<T> {
-  const firestore = useFirestore();
   const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -35,7 +34,7 @@ export function useCollection<T extends DocumentData>(pathOrQuery: string | Quer
     );
 
     return () => unsubscribe();
-  }, [firestore, pathOrQuery]);
+  }, [pathOrQuery]);
 
   return { data, loading, error };
 }

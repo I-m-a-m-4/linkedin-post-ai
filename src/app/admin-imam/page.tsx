@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser } from '@/firebase';
@@ -5,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AnalyticsClient from './analytics-client';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { firestore } from '@/firebase';
 import { format } from 'date-fns';
 
 type AnalyticsEvent = {
@@ -39,32 +40,29 @@ function countOccurrences(arr: (string | string[])[]) {
 export default function AdminPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const firestore = useFirestore();
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const API_QUOTA = 1000; // Placeholder for API credit quota
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
+    // Wait until the authentication state is fully determined.
     if (loading) {
-      // Still waiting for auth state to resolve, do nothing.
-      return;
+      return; // Do nothing while loading.
     }
 
+    // If loading is done and there is no user, they must log in.
     if (!user) {
-      // If loading is finished and there's no user, redirect to login.
       router.push('/login');
       return;
     }
 
-    if (user.email !== 'bimex4@gmail.com') {
-      // If a user is logged in but is not the admin, redirect to home.
+    // If a user is logged in, check if they are the admin.
+    if (user.email === 'belloimam431@gmail.com') {
+      setIsAuthorized(true);
+    } else {
+      // If not the admin, they have no access here. Redirect to home.
       router.push('/');
-      return;
     }
-
-    // If we reach here, the user is the authorized admin.
-    setIsAuthorized(true);
-
   }, [user, loading, router]);
   
   useEffect(() => {
@@ -111,10 +109,13 @@ export default function AdminPage() {
     }
   }, [isAuthorized, firestore]);
 
+  // Render a loading state until authorization is confirmed and data is loaded.
+  // This prevents any flash of content before redirects can happen.
   if (loading || !isAuthorized || !analyticsData) {
     return <div className="flex h-screen items-center justify-center">Loading admin dashboard...</div>;
   }
 
+  // Only render the dashboard if the user is authorized.
   return (
     <div className='p-4 md:p-6 lg:p-8'>
         <div className="mb-8">
