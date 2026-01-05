@@ -149,7 +149,7 @@ export default function AnalyticsClient({
                 <CardDescription>
                     Latest feedback from users.
                 </CardDescription>
-            </Header>
+            </CardHeader>
             <CardContent>
                 <ScrollArea className="h-[300px]">
                     <div className="space-y-4">
