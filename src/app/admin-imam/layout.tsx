@@ -2,26 +2,28 @@
 'use client';
 
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { LoaderCircle, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import { Auth } from 'firebase/auth';
 
 const ADMIN_EMAILS = ['belloimam431@gmail.com'];
 
-export default function AdminLayout({
-  children,
-}: {
+interface AdminLayoutProps {
   children: React.ReactNode;
-}) {
-  const [user, loading] = useAuthState(auth);
+  auth: Auth | null;
+}
+
+export default function AdminLayout({ children, auth }: AdminLayoutProps) {
+  // useAuthState requires a valid Auth instance. If it's null, we can't proceed.
+  const [user, loading] = useAuthState(auth!);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && auth) {
       if (!user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
         if (pathname !== '/login') {
           router.replace('/login');
@@ -30,14 +32,16 @@ export default function AdminLayout({
         router.replace('/admin-imam');
       }
     }
-  }, [user, loading, router, pathname]);
+  }, [user, loading, router, pathname, auth]);
 
   const handleLogout = async () => {
-    await auth.signOut();
-    router.push('/login');
+    if (auth) {
+      await auth.signOut();
+      router.push('/login');
+    }
   };
 
-  if (loading) {
+  if (loading || !auth) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-4">

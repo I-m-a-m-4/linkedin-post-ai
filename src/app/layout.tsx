@@ -1,32 +1,67 @@
 
-import type {Metadata} from 'next';
+'use client';
+
+import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/app/theme-provider';
 import NextTopLoader from 'nextjs-toploader';
+import React, { useEffect, useState } from 'react';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { firebaseConfig } from '@/firebase/config';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const poppins = Poppins({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-poppins' });
 
-export const metadata: Metadata = {
-  title: 'PostAI - AI-Powered LinkedIn Content Formatting',
-  description: 'Instantly format your LinkedIn posts for maximum readability and engagement. Our AI adds smart line breaks, highlights key phrases, and analyzes your content for tone and clarity.',
-  keywords: ['LinkedIn formatting', 'AI content formatter', 'social media tool', 'content marketing', 'post optimizer', 'text formatter'],
-  icons: {
-    icon: '/icon.webp',
-  },
-};
+// We can't add metadata here because it's a client component. 
+// We'll move it to a parent layout if needed, but for now this is the simplest fix.
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [firebaseInstances, setFirebaseInstances] = useState<{
+    app: FirebaseApp;
+    auth: Auth;
+    firestore: Firestore;
+  } | null>(null);
+
+  useEffect(() => {
+    let app: FirebaseApp;
+    if (getApps().length === 0) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApp();
+    }
+    const auth = getAuth(app);
+    const firestore = getFirestore(app);
+    setFirebaseInstances({ app, auth, firestore });
+  }, []);
+
+  // Pass the instances to children that are React components
+  const childrenWithProps = React.Children.map(children, child => {
+    if (React.isValidElement(child)) {
+      // Cloning the element and adding the props.
+      // Note: This assumes the direct child component can accept these props.
+      // This is a common pattern for passing down "global" instances.
+      return React.cloneElement(child as React.ReactElement<any>, { ...firebaseInstances });
+    }
+    return child;
+  });
+
   return (
     <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${poppins.variable} ${inter.variable}`}>
-      <head/>
+      <head>
+        <title>PostAI - AI-Powered LinkedIn Content Formatting</title>
+        <meta name="description" content="Instantly format your LinkedIn posts for maximum readability and engagement. Our AI adds smart line breaks, highlights key phrases, and analyzes your content for tone and clarity." />
+        <meta name="keywords" content="LinkedIn formatting, AI content formatter, social media tool, content marketing, post optimizer, text formatter" />
+        <link rel="icon" href="/icon.png" />
+      </head>
       <body className={`font-inter antialiased`} data-background="grid">
         <NextTopLoader
           color="hsl(var(--primary))"
@@ -45,7 +80,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          {firebaseInstances ? childrenWithProps : <div>Loading Firebase...</div>}
           <Toaster />
         </ThemeProvider>
       </body>

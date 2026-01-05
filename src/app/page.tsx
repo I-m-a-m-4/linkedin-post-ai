@@ -39,11 +39,11 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-import { useUser, firestore } from '@/firebase';
+import { useUser } from '@/firebase/auth/use-user';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, Auth, Firestore } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bold,
@@ -235,7 +235,12 @@ const EditorContent = React.forwardRef<
 });
 EditorContent.displayName = 'EditorContent';
 
-export default function Home() {
+interface HomeProps {
+  auth: Auth | null;
+  firestore: Firestore | null;
+}
+
+export default function Home({ auth, firestore }: HomeProps) {
   const [text, setText] = useState('');
   const [reviewText, setReviewText] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -256,7 +261,7 @@ export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<FeatureKey | null>(null);
 
-  const { user, loading: userLoading } = useUser();
+  const { user, loading: userLoading } = useUser(auth);
   const [randomImageUrl, setRandomImageUrl] = useState('');
 
   useEffect(() => {
@@ -749,7 +754,7 @@ export default function Home() {
                         </div>
                         <p className="text-sm text-muted-foreground">Used by 10,000+ professionals</p>
                     </div>
-                    <div className="relative h-32 overflow-hidden">
+                    <div className="relative h-40 overflow-hidden">
                       <AnimatePresence mode="wait">
                         <motion.h1
                           key={headlineIndex}
@@ -1146,5 +1151,3 @@ export default function Home() {
     </TooltipProvider>
   );
 }
-
-    

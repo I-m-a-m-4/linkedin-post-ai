@@ -1,9 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/firebase';
+import { useState, useEffect } from 'react';
+import { signInWithEmailAndPassword, Auth } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
-const AdminLoginPage = () => {
+interface LoginPageProps {
+  auth: Auth | null;
+}
+
+const AdminLoginPage = ({ auth }: LoginPageProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +26,14 @@ const AdminLoginPage = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) {
+      toast({
+        title: 'Authentication service not available',
+        description: 'Please try refreshing the page.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setError(null);
     setIsLoggingIn(true);
     try {
@@ -40,6 +51,13 @@ const AdminLoginPage = () => {
         setIsLoggingIn(false);
     }
   };
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (auth?.currentUser?.email === 'belloimam431@gmail.com') {
+      router.push('/admin-imam');
+    }
+  }, [auth, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -84,7 +102,7 @@ const AdminLoginPage = () => {
               </div>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isLoggingIn}>
+            <Button type="submit" className="w-full" disabled={isLoggingIn || !auth}>
               {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoggingIn ? 'Logging in...' : 'Login'}
             </Button>
