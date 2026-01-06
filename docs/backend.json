@@ -1,6 +1,23 @@
 
 {
   "entities": {
+    "Admin": {
+        "title": "Admin",
+        "description": "Represents a user with administrative privileges.",
+        "type": "object",
+        "properties": {
+            "uid": {
+                "type": "string",
+                "description": "The unique user ID from Firebase Authentication."
+            },
+            "addedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Timestamp when the user was made an admin."
+            }
+        },
+        "required": ["uid"]
+    },
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
@@ -170,6 +187,14 @@
   "firestore": {
     "structure": [
       {
+        "path": "/admins/{userId}",
+        "definition": {
+            "entityName": "Admin",
+            "schema": { "$ref": "#/backend/entities/Admin" },
+            "description": "Stores a list of admin user UIDs for secure rule checking."
+        }
+      },
+      {
         "path": "/users/{userId}",
         "definition": {
           "entityName": "User",
@@ -246,6 +271,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability for the LinkedIn Post Formatter AI application.  It leverages path-based ownership for user-generated content (Posts and RefinementHistory). Authorization independence is achieved by avoiding `get()` calls in security rules.  QAPs (rules are not filters) are supported by the segregation of user-owned data into predictable paths. This segregation ensures that `list` operations are secure and efficient because rules can easily validate the existence of a `userId` claim on all resources in the collection.\n\nSpecifically:\n\n*   **Users**:  User profiles are stored in a collection `/users/{userId}` using path-based ownership.  This simplifies security rules since the user ID is directly available in the path.\n*   **UserMetadata**: Non-public user information like credit balance is stored in `/user_metadata/{userId}` for secure access.\n*   **UsageHistory**: A subcollection under user metadata to log credit spending.\n*   **Posts**: Posts are stored in `/users/{userId}/posts/{postId}`. This enforces that all posts are owned by a specific user and simplifies security rules.\n*   **RefinementHistory**: RefinementHistory documents are nested under Posts at `/users/{userId}/posts/{postId}/refinementHistory/{refinementHistoryId}`. This maintains the relationship and ownership from User to Post to RefinementHistory."
+    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability for the LinkedIn Post Formatter AI application.  It leverages path-based ownership for user-generated content (Posts and RefinementHistory). Authorization independence is achieved by avoiding `get()` calls in security rules.  QAPs (rules are not filters) are supported by the segregation of user-owned data into predictable paths. This segregation ensures that `list` operations are secure and efficient because rules can easily validate the existence of a `userId` claim on all resources in the collection.\n\nSpecifically:\n\n*   **Admins**: A top-level `admins` collection stores admin UIDs. This is a secure and scalable way to manage permissions, as the `isAdmin()` function can do a simple `exists()` check.\n*   **Users**:  User profiles are stored in a collection `/users/{userId}` using path-based ownership.  This simplifies security rules since the user ID is directly available in the path.\n*   **UserMetadata**: Non-public user information like credit balance is stored in `/user_metadata/{userId}` for secure access.\n*   **UsageHistory**: A subcollection under user metadata to log credit spending.\n*   **Posts**: Posts are stored in `/users/{userId}/posts/{postId}`. This enforces that all posts are owned by a specific user and simplifies security rules.\n*   **RefinementHistory**: RefinementHistory documents are nested under Posts at `/users/{userId}/posts/{postId}/refinementHistory/{refinementHistoryId}`. This maintains the relationship and ownership from User to Post to RefinementHistory."
   }
 }
