@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { SiteHeader } from '@/components/app/site-header';
 import { SiteFooter } from '@/components/app/site-footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Gem, Zap, Loader2 } from 'lucide-react';
-import { usePaystackPayment } from 'react-paystack';
+import { usePaystackPayment, PaystackProps } from 'react-paystack';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -37,16 +37,26 @@ export default function PricingPage() {
 
     const selectedTier = creditTiers[selectedTierIndex];
     const nairaAmount = selectedTier.price;
-    const koboAmount = nairaAmount * 100;
-    
-    const config = {
-        reference: (new Date()).getTime().toString(),
-        email: user?.isAnonymous ? "guest@postai.com" : (user?.email || "guest@postai.com"),
-        amount: koboAmount,
-        publicKey: PAYSTACK_PUBLIC_KEY,
-    };
 
-    const addCredits = async () => {
+    const [config, setConfig] = useState<PaystackProps>({
+        reference: (new Date()).getTime().toString(),
+        email: "guest@postai.com",
+        amount: selectedTier.price * 100,
+        publicKey: PAYSTACK_PUBLIC_KEY,
+    });
+    
+    useEffect(() => {
+        const newConfig = {
+            reference: (new Date()).getTime().toString(),
+            email: user?.isAnonymous ? "guest@postai.com" : (user?.email || "guest@postai.com"),
+            amount: nairaAmount * 100, // Amount in kobo
+            publicKey: PAYSTACK_PUBLIC_KEY,
+        };
+        setConfig(newConfig);
+    }, [nairaAmount, user]);
+
+
+    const addCredits = useCallback(async () => {
         if (!user) {
             toast({ title: "You must be logged in to purchase.", variant: "destructive" });
             return;
@@ -73,12 +83,11 @@ export default function PricingPage() {
         } finally {
             setIsProcessing(false);
         }
-    };
+    }, [user, selectedTier.credits, toast, router]);
 
-    const onSuccess = (reference: any) => {
-        console.log("Paystack success reference:", reference);
+    const onSuccess = useCallback(() => {
         addCredits();
-    };
+    }, [addCredits]);
 
     const onClose = () => {
         console.log('Paystack dialog closed');
@@ -104,7 +113,7 @@ export default function PricingPage() {
             return;
         }
         if (user) {
-            initializePayment({ onSuccess, onClose });
+            initializePayment(onSuccess, onClose);
         } else {
             toast({ title: "Please wait", description: "User session is loading, please try again in a moment.", variant: "default" });
         }

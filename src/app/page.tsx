@@ -85,6 +85,7 @@ import {
 } from '@/lib/unicode-text';
 import { useUserCredits } from '@/hooks/use-user-credits';
 import { PurchaseCreditsDialog } from '@/components/app/purchase-credits-dialog';
+import { z } from 'zod';
 
 
 const featureDetails = {
@@ -190,6 +191,11 @@ const professionalNames = [
 ];
 
 const ADMIN_EMAIL = 'belloimam431@gmail.com';
+
+const AutoFormatTextInputSchema = z.object({
+  rawText: z.string(),
+});
+export type AutoFormatTextInput = z.infer<typeof AutoFormatTextInputSchema>;
 
 export default function Home() {
   const [text, setText] = useState('');
@@ -1103,19 +1109,8 @@ export default function Home() {
         <PurchaseCreditsDialog
           open={showPurchaseDialog}
           onOpenChange={setShowPurchaseDialog}
-          onPurchase={() => {
-            // Here you would redirect to your actual checkout link
-            // For now, we just add credits to simulate a successful purchase
-            toast({
-              title: "Purchase simulation",
-              description: "50 credits have been added to your account.",
-              variant: "success",
-            });
-            setShowPurchaseDialog(false);
-          }}
         />
       </div>
     </TooltipProvider>
   );
 }
-

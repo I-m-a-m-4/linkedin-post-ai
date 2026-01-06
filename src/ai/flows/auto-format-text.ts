@@ -13,17 +13,17 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { analyzeText, AnalyzeTextOutput } from './analyze-text-flow';
+import { analyzeText, type AnalyzeTextOutput } from './analyze-text-flow';
 
 const AutoFormatTextInputSchema = z.object({
   rawText: z.string().describe('The raw text to be formatted for a LinkedIn post.'),
 });
-export type AutoFormatTextInput = z.infer<typeof AutoFormatTextInputSchema>;
+type AutoFormatTextInput = z.infer<typeof AutoFormatTextInputSchema>;
 
 const AutoFormatTextOutputSchema = z.object({
   formattedText: z.string().describe('The AI-formatted text optimized for LinkedIn.'),
 });
-export type AutoFormatTextOutput = z.infer<typeof AutoFormatTextOutputSchema>;
+type AutoFormatTextOutput = z.infer<typeof AutoFormatTextOutputSchema>;
 
 export async function autoFormatAndAnalyzeText(input: AutoFormatTextInput): Promise<AutoFormatTextOutput & AnalyzeTextOutput> {
   const formatResult = await autoFormatTextFlow(input);

@@ -14,7 +14,7 @@ import { z } from 'genkit';
 const AnalyzeTextInputSchema = z.object({
   formattedText: z.string().describe('The formatted text to be analyzed.'),
 });
-export type AnalyzeTextInput = z.infer<typeof AnalyzeTextInputSchema>;
+type AnalyzeTextInput = z.infer<typeof AnalyzeTextInputSchema>;
 
 const AnalyzeTextOutputSchema = z.object({
   readabilityScore: z
