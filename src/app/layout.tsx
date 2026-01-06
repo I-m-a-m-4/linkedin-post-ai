@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     google: 'WGdoPB1C5sq9ITs96lwQAtR1DRpLwcKfDCN9-taB9e8',
   },
   icons: {
-    icon: '/icon.png',
+    icon: '/icon.webp',
   },
 };
 
