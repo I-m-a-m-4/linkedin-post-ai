@@ -66,7 +66,7 @@ import {
   Strikethrough,
   ThumbsUp,
   Underline,
-  User,
+  User as UserIcon,
   Bot,
   Code,
   Mic,
@@ -969,7 +969,7 @@ export default function Home() {
                         <div className="flex items-start gap-3">
                             <Avatar className="h-12 w-12 cursor-pointer" onClick={() => handlePreviewAction('View Profile')}>
                             {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.imageHint} data-ai-hint={avatar.imageHint} />}
-                            <AvatarFallback><User className="h-6 w-6"/></AvatarFallback>
+                            <AvatarFallback><UserIcon className="h-6 w-6"/></AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
                             <div className="flex items-center gap-2">
