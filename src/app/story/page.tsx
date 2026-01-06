@@ -44,11 +44,12 @@ const AnimateOnScroll = ({ children, className, delay = 0 }: { children: React.R
 };
 
 const heroImages = [
-  "65963.jpg",
-  "land.jpg",
-  "star.jpg",
-  "house.jpg",
-];
+   "65963.jpg",
+   "land.jpg",
+    "star.jpg", 
+    "house.jpg",
+
+ ];
 
 const StoryPage = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, []);
@@ -192,25 +193,25 @@ const StoryPage = () => {
           <div className="w-full max-w-3xl mx-auto px-6 md:px-12 relative z-10 space-y-16">
             <AnimateOnScroll>
               <p className="text-xl md:text-2xl text-neutral-800 max-w-2xl mx-auto text-balance text-center font-light">
-                My name is <span className="font-medium text-black">Bime</span>. A software developer and tech enthusiast with a burning ambition: to build something that truly solves a problem.
+                As a heavy user of generative AI, I noticed something: the AI I enjoyed reading the most was ChatGPT. Its minimalism, the precise formatting, the way it presented information without excessive editing—it was just a <span className="font-medium text-black">superior reading experience</span>.
               </p>
             </AnimateOnScroll>
 
             <AnimateOnScroll delay={0.1}>
               <p className="text-xl md:text-2xl text-neutral-800 max-w-2xl mx-auto text-balance text-center font-light">
-                The path to a great idea is rarely a straight line. The biggest challenge wasn't a lack of problems, but the difficulty in finding like-minded people to explore them with. The online world felt too noisy for the deep conversations that spark real innovation.
+                That’s the exact feeling I wanted for LinkedIn. As someone who writes and shares ideas on the platform, my workflow was a chaotic mess of post-writing manual formatting. I'd add line breaks, capitalize words, hunt for the right emoji—all in a desperate attempt to create a top-notch reading experience.
               </p>
             </AnimateOnScroll>
 
             <AnimateOnScroll delay={0.2}>
               <p className="text-xl md:text-2xl text-neutral-800 max-w-2xl mx-auto text-balance text-center font-light">
-                And so, PostAI was born. Not as a grand startup, but as a simple tool to fix a personal frustration: making professional thoughts clear and impactful on platforms like LinkedIn. It started as an experiment in a quiet WhatsApp group.
+                It was a time-sink. A creative bottleneck. The expertise required just to format text felt like a distraction from the actual message. I knew there had to be a way to <span className="font-medium text-black">abstract away the chaos</span>.
               </p>
             </AnimateOnScroll>
 
             <AnimateOnScroll delay={0.3}>
               <p className="text-xl md:text-2xl text-neutral-800 max-w-2xl mx-auto text-balance text-center font-light">
-                This platform isn't just a project; it's an invitation. It’s our starting line to build a community dedicated to better communication. To create something big, together.
+                And so, PostAI was born. It started not as a grand business plan, but as a tool to solve a personal frustration. It’s an admission that clarity is hard, and a belief that the right tools can make it easier. This isn't just a project; it's an invitation to build a community dedicated to better communication.
               </p>
             </AnimateOnScroll>
           </div>
@@ -275,7 +276,7 @@ const StoryPage = () => {
                     </p>
                     <div className="mt-8">
                         <Button asChild size="lg" className="bg-neutral-900 text-white hover:bg-neutral-800">
-                            <a href="https://chat.whatsapp.com/CbCQukJJUBIJv3hbx7Qin1" target="_blank" rel="noopener noreferrer">
+                            <a href="https://chat.whatsapp.com/Bk9AQC1xV039WzCPcD7tRg" target="_blank" rel="noopener noreferrer">
                                 Join the WhatsApp Community <MessageCircle className="ml-2 h-5 w-5" />
                             </a>
                         </Button>
@@ -299,7 +300,7 @@ const StoryPage = () => {
                    Clarity in every post. We build tools for the next generation of professional communication.
                 </p>
                 <div className="flex gap-2">
-                     <a href="https://github.com/bello-alternative/formatiq" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
+                     <a href="https://github.com/i-m-a-m-4" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
                         <Github size={18}/>
                     </a>
                      <a href="https://x.com/dev_imam" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
@@ -320,9 +321,9 @@ const StoryPage = () => {
             
              <div className="flex flex-col gap-4">
                 <h4 className="font-medium text-lg mb-2">Connect</h4>
-                <a href="https://github.com/bello-alternative/formatiq" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">GitHub</a>
+                <a href="https://github.com/i-m-a-m-4" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">GitHub</a>
                 <a href="https://www.linkedin.com/in/imam-bello" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">LinkedIn</a>
-                 <a href="https://chat.whatsapp.com/CbCQukJJUBIJv3hbx7Qin1" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">WhatsApp</a>
+                 <a href="https://chat.whatsapp.com/Bk9AQC1xV039WzCPcD7tRg" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">WhatsApp</a>
             </div>
         </div>
         
@@ -338,3 +339,5 @@ const StoryPage = () => {
 };
 
 export default StoryPage;
+
+    

@@ -1,4 +1,3 @@
-// src/app/admin-imam/analytics-client.tsx
 'use client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -10,14 +9,28 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Users, MousePointerClick, UserCheck, MessageSquare, BatteryCharging } from "lucide-react";
+import { Users, MousePointerClick, UserCheck, MessageSquare, BatteryCharging, Trash2, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
-import { useEffect, useState } from "react";
-import { collection, getDocs, orderBy, query, Firestore } from "firebase/firestore";
+import { useEffect, useState, useCallback } from "react";
+import { collection, getDocs, orderBy, query, doc, deleteDoc, onSnapshot, Unsubscribe } from "firebase/firestore";
 import { format } from "date-fns";
-import { db } from "@/lib/firebase"; // Use the simplified db instance
+import { db } from "@/lib/firebase"; 
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 type AnalyticsEvent = {
   id: string;
@@ -49,47 +62,83 @@ function countOccurrences(arr: (string | string[])[]) {
 
 export default function AnalyticsClient() {
   const [analyticsData, setAnalyticsData] = useState<any>(null);
-  const API_QUOTA = 1000; // Placeholder for API credit quota
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { toast } = useToast();
+  const API_QUOTA = 1000;
 
   useEffect(() => {
+    let unsubscribeEvents: Unsubscribe | undefined;
+    let unsubscribeReviews: Unsubscribe | undefined;
+
     async function getAnalyticsData() {
-        // Fetch Analytics Events
         const eventsRef = collection(db, 'analyticsEvents');
-        const eventsSnapshot = await getDocs(eventsRef);
-        const events = eventsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AnalyticsEvent));
-        
-        // Fetch Reviews
+        unsubscribeEvents = onSnapshot(eventsRef, (snapshot) => {
+            const events = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AnalyticsEvent));
+            
+            const totalClicks = events.length;
+            const uniqueUsers = new Set(events.map(e => e.userId)).size;
+
+            const clicksByDate: { [key: string]: number } = {};
+            events.forEach(event => {
+                if (event.timestamp) {
+                    const date = format(new Date(event.timestamp.seconds * 1000), 'MMM d');
+                    clicksByDate[date] = (clicksByDate[date] || 0) + 1;
+                }
+            });
+            const clicksOverTime = Object.entries(clicksByDate).map(([date, count]) => ({ date, count }));
+
+            const topUsers = countOccurrences(events.map(e => e.userId));
+            const topUser = topUsers.sort((a,b) => b.value - a.value)[0]?.name || 'N/A';
+            
+            setAnalyticsData((prevData: any) => ({
+                ...prevData,
+                totalClicks,
+                uniqueUsers,
+                clicksOverTime,
+                topUser,
+            }));
+        });
+    }
+    
+    function getReviewsData() {
         const reviewsRef = collection(db, 'reviews');
         const reviewsQuery = query(reviewsRef, orderBy('timestamp', 'desc'));
-        const reviewsSnapshot = await getDocs(reviewsQuery);
-        const reviews = reviewsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Review));
-
-        const totalClicks = events.length;
-        const uniqueUsers = new Set(events.map(e => e.userId)).size;
-
-        const clicksByDate: { [key: string]: number } = {};
-        events.forEach(event => {
-            if (event.timestamp) {
-                const date = format(new Date(event.timestamp.seconds * 1000), 'MMM d');
-                clicksByDate[date] = (clicksByDate[date] || 0) + 1;
-            }
-        });
-        const clicksOverTime = Object.entries(clicksByDate).map(([date, count]) => ({ date, count }));
-
-        const topUsers = countOccurrences(events.map(e => e.userId));
-        const topUser = topUsers.sort((a,b) => b.value - a.value)[0]?.name || 'N/A';
-
-        setAnalyticsData({
-            totalClicks,
-            uniqueUsers,
-            clicksOverTime,
-            topUser,
-            reviews,
+        unsubscribeReviews = onSnapshot(reviewsQuery, (snapshot) => {
+            const reviewsData = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Review));
+            setReviews(reviewsData);
         });
     }
 
     getAnalyticsData();
+    getReviewsData();
+
+    return () => {
+      if (unsubscribeEvents) unsubscribeEvents();
+      if (unsubscribeReviews) unsubscribeReviews();
+    }
   }, []);
+
+  const handleDeleteReview = useCallback(async (reviewId: string) => {
+    setDeletingId(reviewId);
+    try {
+        await deleteDoc(doc(db, "reviews", reviewId));
+        toast({
+            title: "Review Deleted",
+            description: "The review has been successfully removed.",
+            variant: "success",
+        });
+    } catch (error: any) {
+        console.error("Error deleting review: ", error);
+        toast({
+            title: "Error",
+            description: "Could not delete the review. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setDeletingId(null);
+    }
+  }, [toast]);
 
 
   const chartDataFormatter = (number: number) =>
@@ -112,10 +161,13 @@ export default function AnalyticsClient() {
   };
   
   if (!analyticsData) {
-    return <div className="flex h-full items-center justify-center">Loading analytics...</div>;
+    return <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-4 text-lg">Loading analytics...</p>
+    </div>;
   }
 
-  const apiUsagePercentage = Math.min((analyticsData.totalClicks / API_QUOTA) * 100, 100);
+  const apiUsagePercentage = Math.min(((analyticsData.totalClicks || 0) / API_QUOTA) * 100, 100);
 
   return (
     <div className="p-4 md:p-6 lg:p-8">
@@ -131,7 +183,7 @@ export default function AnalyticsClient() {
                       <MousePointerClick className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                      <div className="text-2xl font-bold">{analyticsData.totalClicks}</div>
+                      <div className="text-2xl font-bold">{analyticsData.totalClicks || 0}</div>
                       <p className="text-xs text-muted-foreground">"Auto Format" clicks all time</p>
                   </CardContent>
               </Card>
@@ -141,7 +193,7 @@ export default function AnalyticsClient() {
                       <Users className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                      <div className="text-2xl font-bold">{analyticsData.uniqueUsers}</div>
+                      <div className="text-2xl font-bold">{analyticsData.uniqueUsers || 0}</div>
                       <p className="text-xs text-muted-foreground">Number of unique users</p>
                   </CardContent>
               </Card>
@@ -164,7 +216,7 @@ export default function AnalyticsClient() {
                   </CardHeader>
                   <CardContent>
                       <div className="text-2xl font-bold">
-                        {analyticsData.reviews.length}
+                        {reviews.length}
                       </div>
                       <p className="text-xs text-muted-foreground">Total user feedback submitted</p>
                   </CardContent>
@@ -175,7 +227,7 @@ export default function AnalyticsClient() {
                       <BatteryCharging className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                      <div className="text-2xl font-bold">{analyticsData.totalClicks}<span className="text-sm text-muted-foreground">/{API_QUOTA}</span></div>
+                      <div className="text-2xl font-bold">{analyticsData.totalClicks || 0}<span className="text-sm text-muted-foreground">/{API_QUOTA}</span></div>
                        <Progress value={apiUsagePercentage} className="mt-2 h-2" />
                   </CardContent>
               </Card>
@@ -189,7 +241,7 @@ export default function AnalyticsClient() {
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <ReAreaChart
-                    data={analyticsData.clicksOverTime}
+                    data={analyticsData.clicksOverTime || []}
                     margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
@@ -212,23 +264,44 @@ export default function AnalyticsClient() {
                 <CardHeader>
                     <CardTitle>User Reviews</CardTitle>
                     <CardDescription>
-                        Latest feedback from users.
+                        Latest feedback from users. You can delete reviews here.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ScrollArea className="h-[300px]">
+                    <ScrollArea className="h-[300px] -mr-4 pr-4">
                         <div className="space-y-4">
-                            {analyticsData.reviews.length > 0 ? analyticsData.reviews.map((review: Review) => (
-                                <div key={review.id} className="flex items-start gap-4">
+                            {reviews.length > 0 ? reviews.map((review: Review) => (
+                                <div key={review.id} className="flex items-start gap-4 group">
                                     <Avatar className="h-9 w-9 border">
                                         <AvatarFallback>{review.userId.slice(0, 2).toUpperCase()}</AvatarFallback>
                                     </Avatar>
-                                    <div className="grid gap-1">
+                                    <div className="grid gap-1 flex-1">
                                         <p className="text-xs font-medium leading-none text-muted-foreground">
                                             User: {review.userId.slice(0, 8)}...
                                         </p>
                                         <p className="text-sm text-foreground">{review.review}</p>
                                     </div>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity" disabled={deletingId === review.id}>
+                                          {deletingId === review.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-destructive" />}
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete this review.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleDeleteReview(review.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
                             )) : (
                                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">

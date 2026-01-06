@@ -697,7 +697,7 @@ export default function Home() {
                         </div>
                         <p className="text-sm text-muted-foreground">Used by 10,000+ professionals</p>
                     </div>
-                    <div className="relative h-48 md:h-56 lg:h-48 overflow-hidden">
+                    <div className="relative h-48 md:h-36 lg:h-48 overflow-hidden">
                       <AnimatePresence mode="wait">
                         <motion.h1
                           key={headlineIndex}
@@ -707,18 +707,18 @@ export default function Home() {
                           transition={{ duration: 0.5, ease: 'easeInOut' }}
                           className="text-4xl sm:text-5xl font-bold tracking-tighter text-balance !leading-tight text-foreground absolute w-full"
                         >
-                          <span className="block text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1] lg:text-5xl/[1.1] xl:text-6xl/[1.1]">
+                          <span className="block text-4xl/[1.1] sm:text-5xl/[1.1] md:text-5xl/[1.1] lg:text-5xl/[1.1] xl:text-6xl/[1.1]">
                             {headlines[headlineIndex].line1}
                           </span>
                           {headlines[headlineIndex].icon ? (
-                            <span className="flex items-center justify-center lg:justify-start flex-wrap text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1] lg:text-5xl/[1.1] xl:text-6xl/[1.1]">
+                            <span className="flex items-center justify-center lg:justify-start flex-wrap text-4xl/[1.1] sm:text-5xl/[1.1] md:text-5xl/[1.1] lg:text-5xl/[1.1] xl:text-6xl/[1.1]">
                               <span className="text-primary">Linked</span>
                               <img src={linkedInIconUrl} alt="LinkedIn Icon" className="h-9 w-9 sm:h-12 sm:w-12 -mb-1"/>
                               <span className="ml-1 sm:ml-2">Formatting</span>
                               <span className="text-primary ml-1 sm:ml-2">Hub</span>
                             </span>
                           ) : (
-                             <span className="text-primary block text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1] lg:text-5xl/[1.1] xl:text-6xl/[1.1]">
+                             <span className="text-primary block text-4xl/[1.1] sm:text-5xl/[1.1] md:text-5xl/[1.1] lg:text-5xl/[1.1] xl:text-6xl/[1.1]">
                                 {headlines[headlineIndex].line2}
                             </span>
                           )}
@@ -971,23 +971,23 @@ export default function Home() {
                             {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.imageHint} data-ai-hint={avatar.imageHint} />}
                             <AvatarFallback><UserIcon className="h-6 w-6"/></AvatarFallback>
                             </Avatar>
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                                 <p className="font-semibold text-sm sm:text-base leading-tight cursor-pointer hover:underline" onClick={() => handlePreviewAction('View Profile')}>{randomName}</p>
                                 <span className='text-xs text-muted-foreground'>• 1st</span>
                             </div>
                             <p className="text-xs text-muted-foreground leading-tight cursor-pointer hover:underline truncate" onClick={() => handlePreviewAction('View Profile')}>
-                                AI Tinkerer & Overthinker. I build tools that help clarify big ideas.
+                                AI-powered formatting for impactful posts.
                             </p>
                             <p className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer" onClick={() => handlePreviewAction('Timestamp')}>
                                 1w • Edited • <Globe className="h-3 w-3" />
                             </p>
                             </div>
-                            <div className="flex items-center">
-                            <Button variant="outline" size="sm" className="mr-2 text-primary border-primary hover:bg-primary/10 hidden sm:flex">
-                                + Follow
-                            </Button>
-                            <MoreHorizontal className="h-5 w-5 text-muted-foreground cursor-pointer" />
+                            <div className="flex items-center flex-shrink-0 ml-auto">
+                              <Button variant="outline" size="sm" className="mr-2 text-primary border-primary hover:bg-primary/10 hidden sm:flex">
+                                  + Follow
+                              </Button>
+                              <MoreHorizontal className="h-5 w-5 text-muted-foreground cursor-pointer" />
                             </div>
                         </div>
                         <div className="mt-3 text-sm leading-relaxed">
