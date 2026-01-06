@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword, Auth } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,12 +11,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase/auth/use-user';
+import { useAuth } from '@/firebase';
 
-interface LoginPageProps {
-  auth: Auth | null;
-}
-
-const AdminLoginPage = ({ auth }: LoginPageProps) => {
+const AdminLoginPage = () => {
+  const auth = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +23,11 @@ const AdminLoginPage = ({ auth }: LoginPageProps) => {
   const router = useRouter();
   const { toast } = useToast();
   const { user } = useUser(auth);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +107,7 @@ const AdminLoginPage = ({ auth }: LoginPageProps) => {
               </div>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isLoggingIn || !auth}>
+            <Button type="submit" className="w-full" disabled={isLoggingIn || !isClient || !auth}>
               {isLoggingIn && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoggingIn ? 'Logging in...' : 'Login'}
             </Button>

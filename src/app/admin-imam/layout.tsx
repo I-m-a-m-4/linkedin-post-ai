@@ -7,18 +7,17 @@ import { useEffect } from 'react';
 import { LoaderCircle, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { Auth } from 'firebase/auth';
+import { useAuth } from '@/firebase';
 
 const ADMIN_EMAILS = ['belloimam431@gmail.com'];
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  auth: Auth | null;
 }
 
-export default function AdminLayout({ children, auth }: AdminLayoutProps) {
-  // useAuthState requires a valid Auth instance. If it's null, we can't proceed.
-  const [user, loading] = useAuthState(auth ?? undefined);
+export default function AdminLayout({ children }: AdminLayoutProps) {
+  const auth = useAuth();
+  const [user, loading] = useAuthState(auth);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -84,8 +83,5 @@ export default function AdminLayout({ children, auth }: AdminLayoutProps) {
     );
   }
 
-  // If user is not admin but trying to access a protected route, show loading or redirect.
-  // The useEffect handles the redirect logic, so returning null here is fine
-  // while waiting for the redirect to happen.
   return null;
 }

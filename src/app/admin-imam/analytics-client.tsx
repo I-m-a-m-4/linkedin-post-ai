@@ -17,10 +17,7 @@ import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
 import { collection, getDocs, orderBy, query, Firestore } from "firebase/firestore";
 import { format } from "date-fns";
-
-interface AnalyticsClientProps {
-  firestore: Firestore | null;
-}
+import { useFirestore } from "@/firebase";
 
 type AnalyticsEvent = {
   id: string;
@@ -51,7 +48,8 @@ function countOccurrences(arr: (string | string[])[]) {
 }
 
 
-export default function AnalyticsClient({ firestore }: AnalyticsClientProps) {
+export default function AnalyticsClient() {
+  const firestore = useFirestore();
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const API_QUOTA = 1000; // Placeholder for API credit quota
 

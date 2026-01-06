@@ -43,8 +43,9 @@ import { useUser } from '@/firebase/auth/use-user';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { addDoc, collection, serverTimestamp, Firestore } from 'firebase/firestore';
-import { Auth, signInAnonymously } from 'firebase/auth';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { signInAnonymously } from 'firebase/auth';
+import { useAuth, useFirestore } from '@/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bold,
@@ -176,11 +177,6 @@ const EditorContent = React.forwardRef<
 });
 EditorContent.displayName = 'EditorContent';
 
-interface HomeProps {
-  auth: Auth | null;
-  firestore: Firestore | null;
-}
-
 const professionalNames = [
   'Aria Montgomery',
   'Julian Hayes',
@@ -192,7 +188,9 @@ const professionalNames = [
   'Isla Vanderbilt',
 ];
 
-export default function Home({ auth, firestore }: HomeProps) {
+export default function Home() {
+  const auth = useAuth();
+  const firestore = useFirestore();
   const [text, setText] = useState('');
   const [reviewText, setReviewText] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -227,7 +225,14 @@ export default function Home({ auth, firestore }: HomeProps) {
       setRandomImageUrl(postImages[randomIndex].imageUrl);
     }
     setRandomName(professionalNames[Math.floor(Math.random() * professionalNames.length)]);
-  }, []);
+
+    if (auth && !user && !userLoading) {
+      signInAnonymously(auth).catch(error => {
+        console.error("Anonymous sign-in failed on component mount:", error);
+      });
+    }
+
+  }, [auth, user, userLoading]);
 
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     const editor = e.currentTarget;
@@ -244,7 +249,6 @@ export default function Home({ auth, firestore }: HomeProps) {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = pastedHtml;
         
-        // Remove unwanted tags and attributes
         tempDiv.querySelectorAll('hr, style, script').forEach(el => el.remove());
         tempDiv.querySelectorAll('*').forEach(el => {
             el.removeAttribute('class');
@@ -253,11 +257,9 @@ export default function Home({ auth, firestore }: HomeProps) {
         
         pastedContent = tempDiv.innerHTML;
     } else {
-        // Fallback to plain text
         pastedContent = e.clipboardData.getData('text/plain');
     }
     
-    // Final check for horizontal rule characters from plain text just in case
     pastedContent = pastedContent.replace(/---/g, '');
 
     document.execCommand('insertHTML', false, pastedContent);
@@ -265,29 +267,19 @@ export default function Home({ auth, firestore }: HomeProps) {
 
 
   const trackEvent = useCallback(async () => {
-    if (!auth || !firestore) return;
-    let currentUser = auth.currentUser;
-    if (!currentUser) {
-        try {
-            const userCredential = await signInAnonymously(auth);
-            currentUser = userCredential.user;
-        } catch (error) {
-            console.error("Anonymous sign-in failed:", error);
-            return;
-        }
-    }
+    if (!firestore || !user) return;
     
     try {
         const eventsCollection = collection(firestore, 'analyticsEvents');
         await addDoc(eventsCollection, {
-            userId: currentUser.uid,
+            userId: user.uid,
             eventType: 'autoFormatClick',
             timestamp: serverTimestamp(),
         });
     } catch (error) {
         console.error("Error tracking event:", error);
     }
-}, [auth, firestore]);
+  }, [firestore, user]);
 
   const handleAutoFormat = useCallback(() => {
     const rawText = editorRef.current?.innerText || '';
@@ -326,19 +318,8 @@ export default function Home({ auth, firestore }: HomeProps) {
             clearInterval(interval);
             setFormattingProgress(100);
 
-            // Process special styles first
-            let processedHtml = formattedText
-              .replace(/~~(.*?)~~/g, '<s>$1</s>') // Strikethrough
-              .replace(/__(.*?)__/g, '<u>$1</u>'); // Underline
+            let processedHtml = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
-            // Handle links first to wrap them in <a> tags
-            const linkRegex = /(https?:\/\/[^\s]+)/g;
-            processedHtml = processedHtml.replace(linkRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-
-            // Then handle bolding with standard <strong> tags
-             processedHtml = processedHtml.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-            // Handle lists and paragraphs
             processedHtml = processedHtml
               .split('\n')
               .map(line => {
@@ -350,7 +331,6 @@ export default function Home({ auth, firestore }: HomeProps) {
                   return `<div>• ${trimmedLine.substring(2)}</div>`;
                 }
                  if (/^\d+\.\s/.test(trimmedLine)) {
-                  // This is a numbered list item
                   return `<div>${trimmedLine}</div>`;
                 }
                 return line.trim() === '' ? '<br>' : `<p>${line}</p>`;
@@ -366,7 +346,7 @@ export default function Home({ auth, firestore }: HomeProps) {
             }
 
             setShowConfetti(true);
-            setTimeout(() => setShowConfetti(false), 5000); // Confetti for 5 seconds
+            setTimeout(() => setShowConfetti(false), 5000); 
 
             setTimeout(() => {
                 setFormattingStep('');
@@ -409,7 +389,6 @@ export default function Home({ auth, firestore }: HomeProps) {
     const selectedText = selection.toString();
     if (!selectedText) return;
 
-    // First, always convert any special unicode back to normal text
     const plainText = convertUnicodeToText(selectedText);
     let newText = plainText;
     let newHtml = '';
@@ -424,8 +403,6 @@ export default function Home({ auth, firestore }: HomeProps) {
       newText = plainText.toUpperCase();
       newHtml = newText.replace(/\n/g, '<br>');
     } else {
-      // For standard commands, let execCommand handle it directly.
-      // This is better for undo/redo stack.
       document.execCommand(command, false, value);
       if (editorRef.current) {
         setText(editorRef.current.innerHTML);
@@ -433,7 +410,6 @@ export default function Home({ auth, firestore }: HomeProps) {
       return;
     }
     
-    // For custom commands, use insertHTML to maintain undo history
     document.execCommand('insertHTML', false, newHtml);
       
     if (editorRef.current) {
@@ -453,13 +429,11 @@ export default function Home({ auth, firestore }: HomeProps) {
       
       editorClone.querySelectorAll('hr').forEach(hr => hr.remove());
   
-      // Handle spans with font styles by reverting them to normal text
       editorClone.querySelectorAll('span[data-font-style]').forEach(span => {
         const originalText = convertUnicodeToText(span.innerText);
         span.replaceWith(document.createTextNode(originalText));
       });
   
-      // Convert standard formatting tags to their plain text equivalents
       editorClone.querySelectorAll('strong, b').forEach(el => {
         el.replaceWith(document.createTextNode(el.innerText));
       });
@@ -484,13 +458,11 @@ export default function Home({ auth, firestore }: HomeProps) {
             nodeText = (node as HTMLElement).innerText;
             if (nodeText.trim() !== '') {
                 plainText += nodeText;
-                // Add a single newline, but not for the last element
                 if (i < childNodes.length - 1) {
                     plainText += '\n';
                 }
             }
         } else if (node.nodeName === 'BR') {
-            // Treat <br> as a significant line break
             plainText += '\n';
         } else {
             nodeText = node.textContent || '';
@@ -498,7 +470,6 @@ export default function Home({ auth, firestore }: HomeProps) {
         }
       }
   
-      // Final cleanup: ensure no more than two consecutive newlines and trim whitespace
       let cleanedText = plainText.replace(/\n{3,}/g, '\n\n').trim();
   
       await navigator.clipboard.writeText(cleanedText);
@@ -528,46 +499,45 @@ export default function Home({ auth, firestore }: HomeProps) {
 
   const handleSubmitReview = async () => {
     if (!reviewText.trim()) {
-      toast({ title: 'Please enter a review before submitting.', variant: 'destructive' });
-      return;
+        toast({ title: 'Please enter a review before submitting.', variant: 'destructive' });
+        return;
     }
     if (!auth || !firestore) {
-      toast({ title: "Could not connect to the service. Please try again.", variant: 'destructive' });
-      return;
+        toast({ title: "Could not connect to the service. Please try again.", variant: 'destructive' });
+        return;
     }
-  
+
     setIsSubmittingReview(true);
+
     try {
-      // Ensure user is signed in anonymously before proceeding
-      let currentUser = auth.currentUser;
-      if (!currentUser) {
-        const userCredential = await signInAnonymously(auth);
-        currentUser = userCredential.user;
-      }
-      
-      // Now that we're sure we have a user, submit the review
-      const reviewsCollection = collection(firestore, 'reviews');
-      await addDoc(reviewsCollection, {
-        userId: currentUser.uid,
-        review: reviewText,
-        timestamp: serverTimestamp(),
-      });
-  
-      toast({
-        title: 'Thank you for your feedback!',
-        description: 'Your review has been submitted successfully.',
-        variant: 'success',
-      });
-      setReviewText('');
-    } catch (error) {
-      console.error('Error submitting review:', error);
-      toast({
-        title: 'Submission Failed',
-        description: 'Could not submit your review. Please try again.',
-        variant: 'destructive',
-      });
+        let currentUser = user;
+        if (!currentUser) {
+            const userCredential = await signInAnonymously(auth);
+            currentUser = userCredential.user;
+        }
+        
+        const reviewsCollection = collection(firestore, 'reviews');
+        await addDoc(reviewsCollection, {
+            userId: currentUser.uid,
+            review: reviewText,
+            timestamp: serverTimestamp(),
+        });
+
+        toast({
+            title: 'Thank you for your feedback!',
+            description: 'Your review has been submitted successfully.',
+            variant: 'success',
+        });
+        setReviewText('');
+    } catch (error: any) {
+        console.error('Error submitting review:', error);
+        toast({
+            title: 'Submission Failed',
+            description: error.message || 'Could not submit your review. Please try again.',
+            variant: 'destructive',
+        });
     } finally {
-      setIsSubmittingReview(false);
+        setIsSubmittingReview(false);
     }
   };
 
@@ -724,7 +694,7 @@ export default function Home({ auth, firestore }: HomeProps) {
                         </div>
                         <p className="text-sm text-muted-foreground">Used by 10,000+ professionals</p>
                     </div>
-                    <div className="relative h-40 overflow-hidden">
+                    <div className="relative h-48 md:h-40 lg:h-48 overflow-hidden">
                       <AnimatePresence mode="wait">
                         <motion.h1
                           key={headlineIndex}
@@ -734,18 +704,18 @@ export default function Home({ auth, firestore }: HomeProps) {
                           transition={{ duration: 0.5, ease: 'easeInOut' }}
                           className="text-4xl sm:text-5xl font-bold tracking-tighter text-balance !leading-tight text-foreground absolute w-full"
                         >
-                          <span className="block text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1]">
+                          <span className="block text-4xl/[1.1] sm:text-5xl/[1.1] lg:text-6xl/[1.1]">
                             {headlines[headlineIndex].line1}
                           </span>
                           {headlines[headlineIndex].icon ? (
-                            <span className="flex items-center justify-center lg:justify-start flex-wrap text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1]">
+                            <span className="flex items-center justify-center lg:justify-start flex-wrap text-4xl/[1.1] sm:text-5xl/[1.1] lg:text-6xl/[1.1]">
                               <span className="text-primary">Linked</span>
                               <img src={linkedInIconUrl} alt="LinkedIn Icon" className="h-9 w-9 sm:h-12 sm:w-12 -mb-1"/>
                               <span className="ml-1 sm:ml-2">Formatting</span>
                               <span className="text-primary ml-1 sm:ml-2">Hub</span>
                             </span>
                           ) : (
-                             <span className="text-primary block text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1]">
+                             <span className="text-primary block text-4xl/[1.1] sm:text-5xl/[1.1] lg:text-6xl/[1.1]">
                                 {headlines[headlineIndex].line2}
                             </span>
                           )}
@@ -1123,6 +1093,3 @@ export default function Home({ auth, firestore }: HomeProps) {
 }
 
     
-
-    
-

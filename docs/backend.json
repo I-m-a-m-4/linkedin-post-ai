@@ -1,100 +1,195 @@
 {
   "entities": {
-    "UserProfile": {
-      "title": "User Profile",
-      "description": "Represents a user's profile information.",
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
       "type": "object",
+      "description": "Represents a user of the LinkedIn Post Formatter AI application.",
       "properties": {
-        "uid": {
+        "id": {
           "type": "string",
-          "description": "The user's unique ID."
+          "description": "Unique identifier for the User entity."
+        },
+        "username": {
+          "type": "string",
+          "description": "The user's chosen username or handle."
         },
         "email": {
           "type": "string",
-          "format": "email",
-          "description": "The user's email address."
+          "description": "The user's email address.",
+          "format": "email"
         },
-        "displayName": {
+        "profileName": {
           "type": "string",
-          "description": "The user's display name."
-        },
-        "photoURL": {
-          "type": "string",
-          "format": "uri",
-          "description": "URL of the user's profile picture."
+          "description": "The user's Profile Name."
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the user profile was created."
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
         }
       },
-      "required": ["uid", "email"]
+      "required": [
+        "id",
+        "username",
+        "email"
+      ]
     },
-    "AnalyticsEvent": {
-      "title": "Analytics Event",
-      "description": "Represents a single analytics event.",
+    "Post": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Post",
       "type": "object",
+      "description": "Represents a LinkedIn post formatted by the AI.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Post entity."
+        },
         "userId": {
           "type": "string",
-          "description": "The ID of the user who triggered the event."
+          "description": "Reference to the User who created the post. (Relationship: User 1:N Post)"
         },
-        "eventType": {
+        "originalText": {
           "type": "string",
-          "description": "The type of event that occurred (e.g., 'autoFormatClick')."
+          "description": "The original, unformatted text of the post."
         },
-        "timestamp": {
+        "formattedText": {
           "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the event occurred."
+          "description": "The AI-formatted text of the post."
+        },
+        "formattingOptions": {
+          "type": "string",
+          "description": "Options used to format text",
+          "format": "string"
+        },
+        "previewHtml": {
+          "type": "string",
+          "description": "HTML code for the live LinkedIn preview."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the post was created.",
+          "format": "date-time"
+        },
+        "refinementHistoryIds": {
+          "type": "array",
+          "description": "A list of refinements IDs",
+          "items": {
+            "type": "string"
+          }
         }
       },
-      "required": ["userId", "eventType", "timestamp"]
+      "required": [
+        "id",
+        "userId",
+        "originalText",
+        "formattedText"
+      ]
     },
-    "Review": {
-      "title": "User Review",
-      "description": "Represents user feedback or a review.",
+    "RefinementHistory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RefinementHistory",
       "type": "object",
+      "description": "Represents a LinkedIn post format refinement by the AI.",
       "properties": {
-        "userId": {
+        "id": {
           "type": "string",
-          "description": "The ID of the user who submitted the review."
+          "description": "Unique identifier for the RefinementHistory entity."
         },
-        "review": {
+        "postId": {
           "type": "string",
-          "description": "The content of the review."
+          "description": "Reference to the Post that was refined. (Relationship: Post 1:N RefinementHistory)"
         },
-        "timestamp": {
+        "refinedText": {
           "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the review was submitted."
+          "description": "The AI-refined text of the post."
+        },
+        "formattingType": {
+          "type": "string",
+          "description": "Options used to format text"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the post was created.",
+          "format": "date-time"
         }
       },
-      "required": ["userId", "review", "timestamp"]
+      "required": [
+        "id",
+        "postId",
+        "refinedText"
+      ]
     }
   },
   "auth": {
-    "providers": ["google.com", "anonymous"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/UserProfile"
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Path-based ownership simplifies security rules.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            }
+          ]
+        }
       },
-      "description": "Stores public profile information for each user."
-    },
-    "/analyticsEvents/{eventId}": {
-      "schema": {
-        "$ref": "#/entities/AnalyticsEvent"
+      {
+        "path": "/users/{userId}/posts/{postId}",
+        "definition": {
+          "entityName": "Post",
+          "schema": {
+            "$ref": "#/backend/entities/Post"
+          },
+          "description": "Stores posts created by a specific user. Path-based ownership simplifies security rules.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who owns the post."
+            },
+            {
+              "name": "postId",
+              "description": "The unique ID of the post."
+            }
+          ]
+        }
       },
-      "description": "Stores analytics events triggered by users."
-    },
-    "/reviews/{reviewId}": {
-      "schema": {
-        "$ref": "#/entities/Review"
-      },
-      "description": "Stores user-submitted reviews and feedback."
-    }
+      {
+        "path": "/users/{userId}/posts/{postId}/refinementHistory/{refinementHistoryId}",
+        "definition": {
+          "entityName": "RefinementHistory",
+          "schema": {
+            "$ref": "#/backend/entities/RefinementHistory"
+          },
+          "description": "Stores the history of AI formatting refinements for a specific post.  Path-based ownership simplifies security rules.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who owns the post."
+            },
+            {
+              "name": "postId",
+              "description": "The unique ID of the post being refined."
+            },
+            {
+              "name": "refinementHistoryId",
+              "description": "The unique ID of the refinement history entry."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability for the LinkedIn Post Formatter AI application.  It leverages path-based ownership for user-generated content (Posts and RefinementHistory). Authorization independence is achieved by avoiding `get()` calls in security rules.  QAPs (rules are not filters) are supported by the segregation of user-owned data into predictable paths. This segregation ensures that `list` operations are secure and efficient because rules can easily validate the existence of a `userId` claim on all resources in the collection.\n\nSpecifically:\n\n*   **Users**:  User profiles are stored in a collection `/users/{userId}` using path-based ownership.  This simplifies security rules since the user ID is directly available in the path.\n*   **Posts**: Posts are stored in `/users/{userId}/posts/{postId}`. This enforces that all posts are owned by a specific user and simplifies security rules.\n*   **RefinementHistory**: RefinementHistory documents are nested under Posts at `/users/{userId}/posts/{postId}/refinementHistory/{refinementHistoryId}`. This maintains the relationship and ownership from User to Post to RefinementHistory."
   }
 }

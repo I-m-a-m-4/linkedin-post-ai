@@ -5,15 +5,12 @@ import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AnalyticsClient from './analytics-client';
-import { Auth, Firestore } from 'firebase/auth';
 import { LoaderCircle } from 'lucide-react';
+import { useAuth } from '@/firebase';
 
-interface AdminPageProps {
-  auth: Auth | null;
-  firestore: Firestore | null;
-}
 
-export default function AdminPage({ auth, firestore }: AdminPageProps) {
+export default function AdminPage() {
+  const auth = useAuth();
   const { user, loading } = useUser(auth);
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -35,7 +32,7 @@ export default function AdminPage({ auth, firestore }: AdminPageProps) {
     }
   }, [user, loading, router, auth]);
 
-  if (loading || !isAuthorized || !firestore || !auth) {
+  if (loading || !isAuthorized || !auth) {
     return (
         <div className="flex h-screen items-center justify-center">
             <div className="flex flex-col items-center gap-4">
@@ -46,5 +43,5 @@ export default function AdminPage({ auth, firestore }: AdminPageProps) {
     );
   }
 
-  return <AnalyticsClient firestore={firestore} />;
+  return <AnalyticsClient />;
 }
