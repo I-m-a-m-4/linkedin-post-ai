@@ -1,4 +1,3 @@
-
 'use client';
 
 import { autoFormatAndAnalyzeText } from '@/ai/flows/auto-format-text';
@@ -39,13 +38,12 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-import { useUser } from '@/firebase/auth/use-user';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { signInAnonymously } from 'firebase/auth';
-import { useAuth, useFirestore } from '@/firebase';
+import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bold,
@@ -189,8 +187,6 @@ const professionalNames = [
 ];
 
 export default function Home() {
-  const auth = useAuth();
-  const firestore = useFirestore();
   const [text, setText] = useState('');
   const [reviewText, setReviewText] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -211,7 +207,8 @@ export default function Home() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<FeatureKey | null>(null);
 
-  const { user, loading: userLoading } = useUser(auth);
+  const [user, setUser] = useState<User | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
   const [randomImageUrl, setRandomImageUrl] = useState('');
   const [randomName, setRandomName] = useState('');
 
@@ -226,13 +223,19 @@ export default function Home() {
     }
     setRandomName(professionalNames[Math.floor(Math.random() * professionalNames.length)]);
 
-    if (auth && !user && !userLoading) {
-      signInAnonymously(auth).catch(error => {
-        console.error("Anonymous sign-in failed on component mount:", error);
-      });
-    }
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        signInAnonymously(auth).catch(error => {
+          console.error("Anonymous sign-in failed on component mount:", error);
+        });
+      }
+      setUserLoading(false);
+    });
 
-  }, [auth, user, userLoading]);
+    return () => unsubscribe();
+  }, []);
 
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     const editor = e.currentTarget;
@@ -267,10 +270,10 @@ export default function Home() {
 
 
   const trackEvent = useCallback(async () => {
-    if (!firestore || !user) return;
+    if (!db || !user) return;
     
     try {
-        const eventsCollection = collection(firestore, 'analyticsEvents');
+        const eventsCollection = collection(db, 'analyticsEvents');
         await addDoc(eventsCollection, {
             userId: user.uid,
             eventType: 'autoFormatClick',
@@ -279,7 +282,7 @@ export default function Home() {
     } catch (error) {
         console.error("Error tracking event:", error);
     }
-  }, [firestore, user]);
+  }, [user]);
 
   const handleAutoFormat = useCallback(() => {
     const rawText = editorRef.current?.innerText || '';
@@ -502,21 +505,21 @@ export default function Home() {
         toast({ title: 'Please enter a review before submitting.', variant: 'destructive' });
         return;
     }
-    if (!auth || !firestore) {
+    if (!db) {
         toast({ title: "Could not connect to the service. Please try again.", variant: 'destructive' });
         return;
     }
 
     setIsSubmittingReview(true);
+    let currentUser = user;
 
     try {
-        let currentUser = user;
         if (!currentUser) {
             const userCredential = await signInAnonymously(auth);
             currentUser = userCredential.user;
         }
         
-        const reviewsCollection = collection(firestore, 'reviews');
+        const reviewsCollection = collection(db, 'reviews');
         await addDoc(reviewsCollection, {
             userId: currentUser.uid,
             review: reviewText,
@@ -694,7 +697,7 @@ export default function Home() {
                         </div>
                         <p className="text-sm text-muted-foreground">Used by 10,000+ professionals</p>
                     </div>
-                    <div className="relative h-48 md:h-40 lg:h-48 overflow-hidden">
+                    <div className="relative h-48 md:h-56 lg:h-48 overflow-hidden">
                       <AnimatePresence mode="wait">
                         <motion.h1
                           key={headlineIndex}
@@ -704,18 +707,18 @@ export default function Home() {
                           transition={{ duration: 0.5, ease: 'easeInOut' }}
                           className="text-4xl sm:text-5xl font-bold tracking-tighter text-balance !leading-tight text-foreground absolute w-full"
                         >
-                          <span className="block text-4xl/[1.1] sm:text-5xl/[1.1] lg:text-6xl/[1.1]">
+                          <span className="block text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1] lg:text-5xl/[1.1] xl:text-6xl/[1.1]">
                             {headlines[headlineIndex].line1}
                           </span>
                           {headlines[headlineIndex].icon ? (
-                            <span className="flex items-center justify-center lg:justify-start flex-wrap text-4xl/[1.1] sm:text-5xl/[1.1] lg:text-6xl/[1.1]">
+                            <span className="flex items-center justify-center lg:justify-start flex-wrap text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1] lg:text-5xl/[1.1] xl:text-6xl/[1.1]">
                               <span className="text-primary">Linked</span>
                               <img src={linkedInIconUrl} alt="LinkedIn Icon" className="h-9 w-9 sm:h-12 sm:w-12 -mb-1"/>
                               <span className="ml-1 sm:ml-2">Formatting</span>
                               <span className="text-primary ml-1 sm:ml-2">Hub</span>
                             </span>
                           ) : (
-                             <span className="text-primary block text-4xl/[1.1] sm:text-5xl/[1.1] lg:text-6xl/[1.1]">
+                             <span className="text-primary block text-4xl/[1.1] sm:text-5xl/[1.1] md:text-6xl/[1.1] lg:text-5xl/[1.1] xl:text-6xl/[1.1]">
                                 {headlines[headlineIndex].line2}
                             </span>
                           )}
@@ -1091,5 +1094,3 @@ export default function Home() {
     </TooltipProvider>
   );
 }
-
-    

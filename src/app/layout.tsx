@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import { Inter, Poppins, Bricolage_Grotesque, Playfair_Display } from 'next/font/google';
 import { GeistSans } from 'geist/font/sans';
@@ -7,7 +6,6 @@ import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from '@/components/app/theme-provider';
 import NextTopLoader from 'nextjs-toploader';
 import React from 'react';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const poppins = Poppins({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-poppins' });
@@ -22,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'PostAI - AI-Powered LinkedIn Content Formatting',
     description: 'Instantly format your LinkedIn posts for maximum readability and engagement. Our AI adds smart line breaks, highlights key phrases, and analyzes your content for tone and clarity.',
-    url: 'https://linkedin-post-ai.vercel.app', // Replace with your actual URL
+    url: 'https://your-live-site-url.com', // Replace with your actual URL
     siteName: 'PostAI',
     images: [
       {
@@ -76,9 +74,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <FirebaseClientProvider>
-            {children}
-          </FirebaseClientProvider>
+          {children}
           <Toaster />
         </ThemeProvider>
       </body>

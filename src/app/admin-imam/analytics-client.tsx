@@ -1,4 +1,4 @@
-
+// src/app/admin-imam/analytics-client.tsx
 'use client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -17,7 +17,7 @@ import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
 import { collection, getDocs, orderBy, query, Firestore } from "firebase/firestore";
 import { format } from "date-fns";
-import { useFirestore } from "@/firebase";
+import { db } from "@/lib/firebase"; // Use the simplified db instance
 
 type AnalyticsEvent = {
   id: string;
@@ -47,23 +47,19 @@ function countOccurrences(arr: (string | string[])[]) {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
 }
 
-
 export default function AnalyticsClient() {
-  const firestore = useFirestore();
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const API_QUOTA = 1000; // Placeholder for API credit quota
 
   useEffect(() => {
     async function getAnalyticsData() {
-        if (!firestore) return;
-        
         // Fetch Analytics Events
-        const eventsRef = collection(firestore, 'analyticsEvents');
+        const eventsRef = collection(db, 'analyticsEvents');
         const eventsSnapshot = await getDocs(eventsRef);
         const events = eventsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as AnalyticsEvent));
         
         // Fetch Reviews
-        const reviewsRef = collection(firestore, 'reviews');
+        const reviewsRef = collection(db, 'reviews');
         const reviewsQuery = query(reviewsRef, orderBy('timestamp', 'desc'));
         const reviewsSnapshot = await getDocs(reviewsQuery);
         const reviews = reviewsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Review));
@@ -92,10 +88,8 @@ export default function AnalyticsClient() {
         });
     }
 
-    if(firestore) {
-        getAnalyticsData();
-    }
-  }, [firestore]);
+    getAnalyticsData();
+  }, []);
 
 
   const chartDataFormatter = (number: number) =>
