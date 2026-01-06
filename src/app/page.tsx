@@ -1,3 +1,4 @@
+
 'use client';
 
 import { autoFormatAndAnalyzeText } from '@/ai/flows/auto-format-text';
@@ -41,7 +42,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, runTransaction } from 'firebase/firestore';
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -82,6 +83,8 @@ import {
   convertTextToUnicode,
   convertUnicodeToText,
 } from '@/lib/unicode-text';
+import { useUserCredits } from '@/hooks/use-user-credits';
+import { PurchaseCreditsDialog } from '@/components/app/purchase-credits-dialog';
 
 
 const featureDetails = {
@@ -186,6 +189,8 @@ const professionalNames = [
   'Isla Vanderbilt',
 ];
 
+const ADMIN_EMAIL = 'belloimam431@gmail.com';
+
 export default function Home() {
   const [text, setText] = useState('');
   const [reviewText, setReviewText] = useState('');
@@ -209,6 +214,9 @@ export default function Home() {
 
   const [user, setUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(true);
+  const { credits, loading: creditsLoading, spendCredit } = useUserCredits(user?.uid);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
+
   const [randomImageUrl, setRandomImageUrl] = useState('');
   const [randomName, setRandomName] = useState('');
 
@@ -273,16 +281,11 @@ export default function Home() {
     if (!db || !user) return;
     
     try {
-        const eventsCollection = collection(db, 'analyticsEvents');
-        await addDoc(eventsCollection, {
-            userId: user.uid,
-            eventType: 'autoFormatClick',
-            timestamp: serverTimestamp(),
-        });
+        await spendCredit();
     } catch (error) {
         console.error("Error tracking event:", error);
     }
-  }, [user]);
+  }, [user, spendCredit]);
 
   const handleAutoFormat = useCallback(() => {
     const rawText = editorRef.current?.innerText || '';
@@ -293,6 +296,12 @@ export default function Home() {
             variant: 'destructive',
         });
         return;
+    }
+
+    const isAdmin = user?.email === ADMIN_EMAIL;
+    if (!isAdmin && credits !== null && credits <= 0) {
+      setShowPurchaseDialog(true);
+      return;
     }
 
     trackEvent();
@@ -379,7 +388,7 @@ export default function Home() {
             }, 600);
         }
     });
-  }, [trackEvent, toast]);
+  }, [trackEvent, toast, user, credits]);
 
   
   const applyStyle = (command: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'insertUnorderedList' | 'insertOrderedList' | 'unicode' | 'uppercase', value?: any) => {
@@ -681,7 +690,7 @@ export default function Home() {
               origin={{ x: 0.5, y: 1 }}
             />
           )}
-        <SiteHeader />
+        <SiteHeader user={user} credits={credits} creditsLoading={creditsLoading} />
 
         <main className="flex-1">
            <section id="hero" className="container mx-auto grid grid-cols-1 items-center gap-y-16 gap-x-12 px-4 py-20 text-center lg:grid-cols-2 lg:gap-y-8 lg:py-32 lg:text-left">
@@ -695,7 +704,7 @@ export default function Home() {
                         <div className="flex items-center gap-1">
                           {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />)}
                         </div>
-                        <p className="text-sm text-muted-foreground">Used by 10,000+ professionals</p>
+                        <p className="text-sm text-muted-foreground">Join a growing community of creators.</p>
                     </div>
                     <div className="relative h-48 md:h-36 lg:h-48 overflow-hidden">
                       <AnimatePresence mode="wait">
@@ -1090,7 +1099,23 @@ export default function Home() {
             </AlertDialogContent>
           </AlertDialog>
         )}
+
+        <PurchaseCreditsDialog
+          open={showPurchaseDialog}
+          onOpenChange={setShowPurchaseDialog}
+          onPurchase={() => {
+            // Here you would redirect to your actual checkout link
+            // For now, we just add credits to simulate a successful purchase
+            toast({
+              title: "Purchase simulation",
+              description: "50 credits have been added to your account.",
+              variant: "success",
+            });
+            setShowPurchaseDialog(false);
+          }}
+        />
       </div>
     </TooltipProvider>
   );
 }
+

@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -31,9 +32,48 @@
       },
       "required": [
         "id",
-        "username",
         "email"
       ]
+    },
+    "UserMetadata": {
+        "title": "User Metadata",
+        "description": "Stores metadata for a user, like their credit balance.",
+        "type": "object",
+        "properties": {
+            "userId": {
+                "type": "string",
+                "description": "The ID of the user this metadata belongs to."
+            },
+            "credits": {
+                "type": "number",
+                "description": "The number of available formatting credits."
+            },
+            "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Timestamp when the metadata was first created."
+            }
+        },
+        "required": ["userId", "credits"]
+    },
+    "UsageHistory": {
+        "title": "Usage History",
+        "description": "Logs an instance of a user spending a credit.",
+        "type": "object",
+        "properties": {
+            "action": {
+                "type": "string",
+                "description": "The action that was performed (e.g., 'autoFormat')."
+            },
+            "timestamp": {
+                "type": "string",
+                "format": "date-time"
+            },
+            "creditsSpent": {
+                "type": "number"
+            }
+        },
+        "required": ["action", "timestamp", "creditsSpent"]
     },
     "Post": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -146,6 +186,22 @@
         }
       },
       {
+        "path": "/user_metadata/{userId}",
+        "definition": {
+            "entityName": "UserMetadata",
+            "schema": { "$ref": "#/backend/entities/UserMetadata" },
+            "description": "Stores non-public user data like credit balance."
+        }
+      },
+      {
+          "path": "/user_metadata/{userId}/usage_history/{usageId}",
+          "definition": {
+              "entityName": "UsageHistory",
+              "schema": { "$ref": "#/backend/entities/UsageHistory" },
+              "description": "A log of each time a user spends a credit."
+          }
+      },
+      {
         "path": "/users/{userId}/posts/{postId}",
         "definition": {
           "entityName": "Post",
@@ -190,6 +246,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability for the LinkedIn Post Formatter AI application.  It leverages path-based ownership for user-generated content (Posts and RefinementHistory). Authorization independence is achieved by avoiding `get()` calls in security rules.  QAPs (rules are not filters) are supported by the segregation of user-owned data into predictable paths. This segregation ensures that `list` operations are secure and efficient because rules can easily validate the existence of a `userId` claim on all resources in the collection.\n\nSpecifically:\n\n*   **Users**:  User profiles are stored in a collection `/users/{userId}` using path-based ownership.  This simplifies security rules since the user ID is directly available in the path.\n*   **Posts**: Posts are stored in `/users/{userId}/posts/{postId}`. This enforces that all posts are owned by a specific user and simplifies security rules.\n*   **RefinementHistory**: RefinementHistory documents are nested under Posts at `/users/{userId}/posts/{postId}/refinementHistory/{refinementHistoryId}`. This maintains the relationship and ownership from User to Post to RefinementHistory."
+    "reasoning": "The Firestore structure is designed to ensure authorization independence, clarity, and scalability for the LinkedIn Post Formatter AI application.  It leverages path-based ownership for user-generated content (Posts and RefinementHistory). Authorization independence is achieved by avoiding `get()` calls in security rules.  QAPs (rules are not filters) are supported by the segregation of user-owned data into predictable paths. This segregation ensures that `list` operations are secure and efficient because rules can easily validate the existence of a `userId` claim on all resources in the collection.\n\nSpecifically:\n\n*   **Users**:  User profiles are stored in a collection `/users/{userId}` using path-based ownership.  This simplifies security rules since the user ID is directly available in the path.\n*   **UserMetadata**: Non-public user information like credit balance is stored in `/user_metadata/{userId}` for secure access.\n*   **UsageHistory**: A subcollection under user metadata to log credit spending.\n*   **Posts**: Posts are stored in `/users/{userId}/posts/{postId}`. This enforces that all posts are owned by a specific user and simplifies security rules.\n*   **RefinementHistory**: RefinementHistory documents are nested under Posts at `/users/{userId}/posts/{postId}/refinementHistory/{refinementHistoryId}`. This maintains the relationship and ownership from User to Post to RefinementHistory."
   }
 }

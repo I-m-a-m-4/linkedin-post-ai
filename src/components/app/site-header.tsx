@@ -1,7 +1,34 @@
-import { Button } from "@/components/ui/button"
-import { Linkedin } from "lucide-react"
 
-export function SiteHeader() {
+import { Button } from "@/components/ui/button"
+import { Linkedin, Gem, Star, Loader2 } from "lucide-react"
+import { User } from 'firebase/auth';
+import { Skeleton } from "../ui/skeleton";
+
+const ADMIN_EMAIL = 'belloimam431@gmail.com';
+
+export function SiteHeader({ user, credits, creditsLoading }: { user: User | null, credits: number | null, creditsLoading: boolean }) {
+    const isAdmin = user?.email === ADMIN_EMAIL;
+
+    const renderCredits = () => {
+        if (creditsLoading || credits === null) {
+            return <Skeleton className="h-5 w-16" />;
+        }
+        if (isAdmin) {
+            return (
+                <div className="flex items-center gap-1.5 text-sm font-semibold text-purple-500">
+                    <Star className="h-4 w-4 fill-purple-500" />
+                    Admin
+                </div>
+            )
+        }
+        return (
+            <div className="flex items-center gap-1.5 text-sm font-semibold">
+                <Gem className="h-4 w-4 text-primary" />
+                <span>{credits} Credits</span>
+            </div>
+        );
+    }
+
     return (
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:px-6">
             <div className="flex items-center gap-2 font-semibold">
@@ -12,7 +39,10 @@ export function SiteHeader() {
                     </h1>
                 </a>
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-4">
+                <div className="rounded-full bg-muted px-3 py-1.5">
+                   {renderCredits()}
+                </div>
                 <Button variant="ghost" size="icon" asChild>
                     <a href="https://www.linkedin.com/in/imam-bello" target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-primary transition-colors">
                         <Linkedin className="h-5 w-5 " />
