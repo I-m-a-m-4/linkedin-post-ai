@@ -1,16 +1,14 @@
-// src/app/admin-imam/layout.tsx
+
 'use client';
 
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { LoaderCircle, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-
-// Hardcoded list of admin emails
-const ADMIN_EMAILS = ['belloimam431@gmail.com'];
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [user, loading] = useAuthState(auth);
@@ -18,31 +16,41 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
 
   useEffect(() => {
-    // If auth state is still loading, do nothing.
     if (loading) {
       return;
     }
 
-    const isLoginPage = pathname === '/admin-imam/login';
-    const isAuthorizedAdmin = user && user.email && ADMIN_EMAILS.includes(user.email);
+    const checkAdminStatus = async () => {
+      const isLoginPage = pathname === '/admin/login';
+      
+      if (!user) {
+        if (!isLoginPage) {
+          router.replace('/admin/login');
+        }
+        return;
+      }
+      
+      const adminDocRef = doc(db, 'admins', user.uid);
+      const adminDocSnap = await getDoc(adminDocRef);
+      const isAuthorizedAdmin = adminDocSnap.exists() || user.email === 'belloimam431@gmail.com';
 
-    // If user is not an authorized admin and not on the login page, redirect to login.
-    if (!isAuthorizedAdmin && !isLoginPage) {
-      router.replace('/admin-imam/login');
-    }
+      if (!isAuthorizedAdmin && !isLoginPage) {
+        router.replace('/admin/login');
+      }
 
-    // If user is an authorized admin and on the login page, redirect to the dashboard.
-    if (isAuthorizedAdmin && isLoginPage) {
-      router.replace('/admin-imam');
-    }
+      if (isAuthorizedAdmin && isLoginPage) {
+        router.replace('/admin');
+      }
+    };
+
+    checkAdminStatus();
   }, [user, loading, router, pathname]);
 
   const handleLogout = async () => {
     await auth.signOut();
-    router.push('/admin-imam/login');
+    router.push('/admin/login');
   };
 
-  // While checking authentication, show a loading screen.
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -54,15 +62,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // If on the login page, just render the login component without the layout.
-  if (pathname === '/admin-imam/login') {
+  if (pathname === '/admin/login') {
     return <>{children}</>;
   }
   
-  const isAuthorizedAdmin = user && user.email && ADMIN_EMAILS.includes(user.email);
-
-  // If user is an authorized admin, show the full admin layout with content.
-  if (isAuthorizedAdmin) {
+  if (user) {
     return (
       <div className="flex min-h-screen w-full flex-col">
         <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -90,6 +94,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // Fallback for unauthorized access if redirection hasn't happened yet.
   return null;
 }
+
+    

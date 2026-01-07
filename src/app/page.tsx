@@ -1,4 +1,3 @@
-
 'use client';
 
 import { autoFormatAndAnalyzeText } from '@/ai/flows/auto-format-text';
@@ -19,7 +18,6 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -38,12 +36,13 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
+  AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
-import { addDoc, collection, serverTimestamp, doc, runTransaction } from 'firebase/firestore';
-import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
+import { addDoc, collection, serverTimestamp, doc, runTransaction, setDoc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged, User, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -74,7 +73,8 @@ import {
   Palette,
   ArrowUp,
   CaseUpper,
-  Type
+  Type,
+  Gem
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Confetti from 'react-confetti';
@@ -86,6 +86,17 @@ import {
 import { useUserCredits } from '@/hooks/use-user-credits';
 import { PurchaseCreditsDialog } from '@/components/app/purchase-credits-dialog';
 import { z } from 'zod';
+import Image from 'next/image';
+
+const AutoFormatTextInputSchema = z.object({
+  rawText: z.string().describe('The raw text to be formatted for a LinkedIn post.'),
+});
+export type AutoFormatTextInput = z.infer<typeof AutoFormatTextInputSchema>;
+
+const AutoFormatTextOutputSchema = z.object({
+  formattedText: z.string().describe('The AI-formatted text optimized for LinkedIn.'),
+});
+type AutoFormatTextOutput = z.infer<typeof AutoFormatTextOutputSchema>;
 
 
 const featureDetails = {
@@ -192,10 +203,6 @@ const professionalNames = [
 
 const ADMIN_EMAIL = 'belloimam431@gmail.com';
 
-const AutoFormatTextInputSchema = z.object({
-  rawText: z.string(),
-});
-export type AutoFormatTextInput = z.infer<typeof AutoFormatTextInputSchema>;
 
 export default function Home() {
   const [text, setText] = useState('');
@@ -222,6 +229,8 @@ export default function Home() {
   const [userLoading, setUserLoading] = useState(true);
   const { credits, loading: creditsLoading, spendCredit } = useUserCredits(user?.uid);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+
 
   const [randomImageUrl, setRandomImageUrl] = useState('');
   const [randomName, setRandomName] = useState('');
@@ -238,13 +247,7 @@ export default function Home() {
     setRandomName(professionalNames[Math.floor(Math.random() * professionalNames.length)]);
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        signInAnonymously(auth).catch(error => {
-          console.error("Anonymous sign-in failed on component mount:", error);
-        });
-      }
+      setUser(currentUser);
       setUserLoading(false);
     });
 
@@ -283,17 +286,72 @@ export default function Home() {
   };
 
 
-  const trackEvent = useCallback(async () => {
-    if (!db || !user) return;
-    
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
     try {
-        await spendCredit();
-    } catch (error) {
-        console.error("Error tracking event:", error);
-    }
-  }, [user, spendCredit]);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, {
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          createdAt: serverTimestamp(),
+        });
+      }
 
-  const handleAutoFormat = useCallback(() => {
+      setShowLoginDialog(false);
+      toast({
+        title: 'Login Successful',
+        description: 'You are now logged in.',
+        variant: 'success'
+      });
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      toast({
+        title: 'Login Failed',
+        description: 'Could not sign in with Google. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const savePost = async (formattedText: string, rawText: string) => {
+    if (!user) return;
+    try {
+        await addDoc(collection(db, 'users', user.uid, 'posts'), {
+            userId: user.uid,
+            originalText: rawText,
+            formattedText: formattedText,
+            createdAt: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error("Error saving post:", error);
+    }
+  };
+
+  const trackAnalyticsEvent = async (eventType: string) => {
+    if (!user) return;
+    try {
+      await addDoc(collection(db, "analyticsEvents"), {
+        userId: user.uid,
+        eventType: eventType,
+        timestamp: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error tracking analytics event:", error);
+    }
+  };
+
+  const handleAutoFormat = useCallback(async () => {
+    if (!user) {
+      setShowLoginDialog(true);
+      return;
+    }
+
     const rawText = editorRef.current?.innerText || '';
     if (!rawText.trim()) {
         toast({
@@ -303,14 +361,21 @@ export default function Home() {
         });
         return;
     }
-
+    
     const isAdmin = user?.email === ADMIN_EMAIL;
     if (!isAdmin && credits !== null && credits <= 0) {
       setShowPurchaseDialog(true);
       return;
     }
 
-    trackEvent();
+    try {
+      await spendCredit();
+      trackAnalyticsEvent('autoFormatClick');
+    } catch (error) {
+      setShowPurchaseDialog(true);
+      return;
+    }
+    
     setReadabilityScore(null);
     setTone(null);
     
@@ -363,6 +428,8 @@ export default function Home() {
                 editorRef.current.innerHTML = processedHtml;
             }
 
+            savePost(processedHtml, rawText);
+
             setShowConfetti(true);
             setTimeout(() => setShowConfetti(false), 5000); 
 
@@ -394,7 +461,7 @@ export default function Home() {
             }, 600);
         }
     });
-  }, [trackEvent, toast, user, credits]);
+  }, [spendCredit, toast, user, credits]);
 
   
   const applyStyle = (command: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'insertUnorderedList' | 'insertOrderedList' | 'unicode' | 'uppercase', value?: any) => {
@@ -526,17 +593,17 @@ export default function Home() {
     }
 
     setIsSubmittingReview(true);
-    let currentUser = user;
+    
+    if (!user) {
+        setShowLoginDialog(true);
+        setIsSubmittingReview(false);
+        return;
+    }
 
     try {
-        if (!currentUser) {
-            const userCredential = await signInAnonymously(auth);
-            currentUser = userCredential.user;
-        }
-        
         const reviewsCollection = collection(db, 'reviews');
         await addDoc(reviewsCollection, {
-            userId: currentUser.uid,
+            userId: user.uid,
             review: reviewText,
             timestamp: serverTimestamp(),
         });
@@ -652,7 +719,7 @@ export default function Home() {
   useEffect(() => {
     const interval = setInterval(() => {
       setHeadlineIndex((prevIndex) => (prevIndex + 1) % headlines.length);
-    }, 4000); // Change every 4 seconds
+    }, 4000); 
     return () => clearInterval(interval);
   }, [headlines.length]);
   
@@ -663,8 +730,6 @@ export default function Home() {
     { src: 'https://framerusercontent.com/images/QiOTrocDqj2AQT9ljWfimegkCHM.jpg?width=400&height=400', alt: 'User 4' },
     { src: 'https://framerusercontent.com/images/u1wVuGWYuLuBgD2IQEVOR0ZsZ8.jpg?width=400&height=400', alt: 'User 5' },
   ];
-
-  const linkedInIconUrl = 'https://i.ibb.co/tPC17k0F/free-linkedin-logo-3d-icon-png-download-12257269.webp';
 
   const CurrentFeatureIcon = selectedFeature ? featureDetails[selectedFeature!].Icon : null;
 
@@ -696,7 +761,7 @@ export default function Home() {
               origin={{ x: 0.5, y: 1 }}
             />
           )}
-        <SiteHeader user={user} credits={credits} creditsLoading={creditsLoading} />
+        <SiteHeader user={user} onLogin={() => setShowLoginDialog(true)} credits={credits} creditsLoading={creditsLoading || userLoading} userLoading={userLoading} />
 
         <main className="flex-1">
            <section id="hero" className="container mx-auto grid grid-cols-1 items-center gap-y-16 gap-x-12 px-4 py-20 text-center lg:grid-cols-2 lg:gap-y-8 lg:py-32 lg:text-left">
@@ -728,7 +793,7 @@ export default function Home() {
                           {headlines[headlineIndex].icon ? (
                             <span className="flex items-center justify-center lg:justify-start flex-wrap text-4xl/[1.1] sm:text-5xl/[1.1] md:text-5xl/[1.1] lg:text-5xl/[1.1] xl:text-6xl/[1.1]">
                               <span className="text-primary">Linked</span>
-                              <img src={linkedInIconUrl} alt="LinkedIn Icon" className="h-9 w-9 sm:h-12 sm:w-12 -mb-1"/>
+                              <Image src="/icon.png" alt="LinkedIn Icon" width={36} height={36} className="h-9 w-9 sm:h-12 sm:w-12 -mb-1"/>
                               <span className="ml-1 sm:ml-2">Formatting</span>
                               <span className="text-primary ml-1 sm:ml-2">Hub</span>
                             </span>
@@ -766,7 +831,6 @@ export default function Home() {
             </section>
 
             <div id="editor" className="flex flex-1 flex-col gap-6 p-4 md:flex-row md:p-6 lg:p-8">
-                {/* Editor Panel */}
                 <div className="flex w-full flex-col md:w-1/2">
                 <Card className="flex flex-col h-full bg-card/80 backdrop-blur-sm shadow-2xl transition-all duration-300 hover:shadow-primary/10" style={{'--tw-shadow-color': 'hsl(var(--primary) / 0.1)', boxShadow: '0 0 0 1px hsl(var(--border)), 0 10px 30px -10px var(--tw-shadow-color)'}}>
                     <CardHeader>
@@ -948,7 +1012,6 @@ export default function Home() {
                 </Card>
                 </div>
 
-                {/* Preview Panel */}
                 <div className="w-full md:w-1/2 flex flex-col">
                 <Card className="flex flex-col h-full bg-card/80 backdrop-blur-sm shadow-2xl transition-all duration-300 hover:shadow-primary/10" style={{'--tw-shadow-color': 'hsl(var(--primary) / 0.1)', boxShadow: '0 0 0 1px hsl(var(--border)), 0 10px 30px -10px var(--tw-shadow-color)'}}>
                     <CardHeader>
@@ -1110,9 +1173,26 @@ export default function Home() {
           open={showPurchaseDialog}
           onOpenChange={setShowPurchaseDialog}
         />
+
+        <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Please Log In</AlertDialogTitle>
+              <AlertDialogDescription>
+                To use this feature and save your work, please sign in with your Google account.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleGoogleSignIn}>
+                <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.05 1.05-2.86 2.17-4.82 2.17-5.78 0-10.4-4.88-10.4-10.92S6.7 1.48 12.48 1.48c3.24 0 5.32 1.3 6.55 2.4l2.2-2.2C19.03 1.18 16.25 0 12.48 0 5.6 0 0 5.6 0 12.48s5.6 12.48 12.48 12.48c7.28 0 12.1-5.15 12.1-12.48 0-.8-.08-1.55-.2-2.32H12.48z"></path></svg>
+                Continue with Google
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
       </div>
     </TooltipProvider>
   );
 }
-
-    

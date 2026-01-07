@@ -1,10 +1,10 @@
-
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Github, Linkedin, Send, Loader2, Twitter } from "lucide-react"
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface SiteFooterProps {
     reviewText: string;
@@ -23,13 +23,14 @@ export function SiteFooter({
 }: SiteFooterProps) {
     const hasReviewFunctionality = !!handleSubmitReview;
 
+
     return (
         <footer className="bg-background text-foreground border-t py-16 px-6">
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
                 <div className="col-span-1 md:col-span-2">
                     <div className="flex items-center gap-2 mb-6">
                         <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground">
-                             <img src="https://i.ibb.co/tPC17k0F/free-linkedin-logo-3d-icon-png-download-12257269.webp" alt="PostAI Logo" className="h-5 w-5" />
+                             <Image src="/icon.png" alt="PostAI Logo" width={20} height={20} />
                         </div>
                         <h2 className="text-2xl font-bricolage font-semibold">PostAI</h2>
                     </div>
@@ -37,7 +38,7 @@ export function SiteFooter({
                        Clarity in every post. We build tools for the next generation of professional communication.
                     </p>
                     <div className="flex gap-2">
-                         <a href="https://github.com/bello-alternative/formatiq" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
+                         <a href="https://github.com/i-m-a-m-4" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
                             <Github size={18}/>
                         </a>
                          <a href="https://x.com/dev_imam" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
@@ -84,7 +85,7 @@ export function SiteFooter({
                             </div>
                         </div>
                     )}
-                     <a href="https://chat.whatsapp.com/CbCQukJJUBIJv3hbx7Qin1" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">WhatsApp</a>
+                     <a href="https://chat.whatsapp.com/Bk9AQC1xV039WzCPcD7tRg" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">WhatsApp</a>
                 </div>
             </div>
             

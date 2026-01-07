@@ -1,32 +1,33 @@
-
+// src/app/pricing/page.tsx
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import Image from 'next/image';
 import { SiteHeader } from '@/components/app/site-header';
 import { SiteFooter } from '@/components/app/site-footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Zap, Loader2, DollarSign, LocateFixed } from 'lucide-react';
+import { Check, Zap, Loader2, Gem } from 'lucide-react';
 import { usePaystackPayment, PaystackProps } from 'react-paystack';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useToast } from '@/hooks/use-toast';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { doc, updateDoc, increment, setDoc, serverTimestamp, collection, addDoc, getDoc, writeBatch } from 'firebase/firestore';
 import { useUserCredits } from '@/hooks/use-user-credits';
 import { useRouter } from 'next/navigation';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Image from 'next/image';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 const PAYSTACK_PUBLIC_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '';
 
 const creditTiers = [
-    { credits: 3, priceNGN: 300, priceUSD: 2 },
-    { credits: 10, priceNGN: 1000, priceUSD: 5 },
-    { credits: 20, priceNGN: 1800, priceUSD: 9 },
-    { credits: 50, priceNGN: 4000, priceUSD: 20 },
-    { credits: 100, priceNGN: 7500, priceUSD: 35 },
+    { credits: 10, price: 1000 },
+    { credits: 25, price: 2250 },
+    { credits: 50, price: 4000 },
+    { credits: 100, price: 7500 },
+    { credits: 200, price: 14000 },
 ];
 
 const NairaIcon = () => (
@@ -36,34 +37,35 @@ const NairaIcon = () => (
 export default function PricingPage() {
     const [user, authLoading] = useAuthState(auth);
     const { credits, loading: creditsLoading } = useUserCredits(user?.uid);
-    const [selectedTierIndex, setSelectedTierIndex] = useState(1);
-    const [currency, setCurrency] = useState<'NGN' | 'USD'>('NGN');
+    const [selectedTierIndex, setSelectedTierIndex] = useState(0);
     const [isProcessing, setIsProcessing] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
+    const [showLoginDialog, setShowLoginDialog] = useState(false);
 
     const selectedTier = creditTiers[selectedTierIndex];
-    const amount = currency === 'NGN' ? selectedTier.priceNGN : selectedTier.priceUSD;
-    const currencySymbol = currency === 'NGN' ? <NairaIcon /> : '$';
+    const amount = selectedTier.price;
 
     const [config, setConfig] = useState<PaystackProps>({
         reference: (new Date()).getTime().toString(),
         email: "guest@postai.com",
         amount: amount * 100,
         publicKey: PAYSTACK_PUBLIC_KEY,
-        currency: currency,
+        currency: 'NGN',
     });
     
     useEffect(() => {
-        const newConfig = {
-            reference: (new Date()).getTime().toString(),
-            email: user?.isAnonymous ? "guest@postai.com" : (user?.email || "guest@postai.com"),
-            amount: amount * 100,
-            publicKey: PAYSTACK_PUBLIC_KEY,
-            currency: currency,
-        };
-        setConfig(newConfig);
-    }, [amount, currency, user]);
+        if (user) {
+            const newConfig = {
+                reference: (new Date()).getTime().toString(),
+                email: user.email || "guest@postai.com",
+                amount: amount * 100,
+                publicKey: PAYSTACK_PUBLIC_KEY,
+                currency: 'NGN',
+            };
+            setConfig(newConfig);
+        }
+    }, [amount, user]);
 
 
     const addCredits = useCallback(async () => {
@@ -74,9 +76,29 @@ export default function PricingPage() {
         setIsProcessing(true);
         try {
             const userMetaRef = doc(db, 'user_metadata', user.uid);
-            await updateDoc(userMetaRef, {
-                credits: increment(selectedTier.credits)
+            const usageHistoryRef = collection(db, 'user_metadata', user.uid, 'usage_history');
+            
+            const batch = writeBatch(db);
+            
+            batch.update(userMetaRef, { credits: increment(selectedTier.credits) });
+            
+            const usageDoc = doc(usageHistoryRef);
+            batch.set(usageDoc, {
+              action: 'purchase',
+              timestamp: new Date(),
+              creditsSpent: -selectedTier.credits, // Negative for credit gain
             });
+
+            await batch.commit();
+
+            await addDoc(collection(db, 'purchases'), {
+                userId: user.uid,
+                credits: selectedTier.credits,
+                amount: selectedTier.price,
+                currency: 'NGN',
+                timestamp: serverTimestamp()
+            });
+
             toast({
                 title: "Purchase Successful!",
                 description: `${selectedTier.credits} credits have been added to your account.`,
@@ -87,13 +109,13 @@ export default function PricingPage() {
             console.error("Error adding credits:", error);
             toast({
                 title: "Error",
-                description: "Could not add credits. Please try again or contact support.",
+                description: "Could not add credits. Please contact support.",
                 variant: "destructive",
             });
         } finally {
             setIsProcessing(false);
         }
-    }, [user, selectedTier.credits, toast, router]);
+    }, [user, selectedTier, toast, router]);
 
     const onSuccess = useCallback(() => {
         addCredits();
@@ -114,6 +136,10 @@ export default function PricingPage() {
     ];
     
     const handlePurchase = () => {
+        if (!user) {
+            setShowLoginDialog(true);
+            return;
+        }
         if (!PAYSTACK_PUBLIC_KEY) {
             toast({
                 title: "Configuration Error",
@@ -122,16 +148,45 @@ export default function PricingPage() {
             });
             return;
         }
-        if (user) {
-            initializePayment({onSuccess, onClose});
-        } else {
-            toast({ title: "Please wait", description: "User session is loading, please try again in a moment.", variant: "default" });
-        }
+        initializePayment({onSuccess, onClose});
     };
+
+    const handleGoogleSignIn = async () => {
+        const provider = new GoogleAuthProvider();
+        try {
+          const result = await signInWithPopup(auth, provider);
+          const user = result.user;
+          
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (!userDoc.exists()) {
+            await setDoc(userDocRef, {
+              email: user.email,
+              displayName: user.displayName,
+              photoURL: user.photoURL,
+              createdAt: serverTimestamp(),
+            });
+          }
+    
+          setShowLoginDialog(false);
+          toast({
+            title: 'Login Successful',
+            description: 'You can now complete your purchase.',
+            variant: 'success'
+          });
+        } catch (error) {
+          console.error("Google sign-in error:", error);
+          toast({
+            title: 'Login Failed',
+            description: 'Could not sign in with Google. Please try again.',
+            variant: 'destructive'
+          });
+        }
+      };
 
     return (
         <div className="flex min-h-dvh w-full flex-col font-inter">
-            <SiteHeader user={user} credits={credits} creditsLoading={creditsLoading || authLoading} />
+            <SiteHeader user={user} onLogin={() => setShowLoginDialog(true)} credits={credits} creditsLoading={creditsLoading || authLoading} userLoading={authLoading} />
             <main className="flex-1">
                 <div className="container mx-auto max-w-4xl py-16 px-4">
                     <div className="text-center mb-12">
@@ -150,23 +205,15 @@ export default function PricingPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-6">
-                                    <div className="flex justify-center mb-4">
-                                        <Tabs value={currency} onValueChange={(value) => setCurrency(value as 'NGN' | 'USD')}>
-                                            <TabsList>
-                                                <TabsTrigger value="NGN">NGN</TabsTrigger>
-                                                <TabsTrigger value="USD">USD</TabsTrigger>
-                                            </TabsList>
-                                        </Tabs>
-                                    </div>
                                     <div className="text-center">
                                         <div className="text-5xl font-bold tracking-tighter">
                                             <span className="flex items-center justify-center gap-2">
                                                 {selectedTier.credits}
-                                                <Image src="/coin.png" alt="Credit Coin" width={32} height={32} />
+                                                <Gem className="h-8 w-8 text-primary" />
                                             </span>
                                         </div>
                                         <p className="text-2xl font-semibold text-muted-foreground flex items-center justify-center">
-                                            for {currencySymbol}{amount}
+                                            for <NairaIcon />{amount.toLocaleString()}
                                         </p>
                                     </div>
                                     
@@ -190,7 +237,7 @@ export default function PricingPage() {
                                         disabled={isProcessing || authLoading}
                                     >
                                         {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
-                                        Pay {currencySymbol}{amount} Securely
+                                        Pay <NairaIcon />{amount.toLocaleString()} Securely
                                     </Button>
                                 </div>
                             </CardContent>
@@ -207,13 +254,31 @@ export default function PricingPage() {
                                 ))}
                             </ul>
                             <p className="text-sm text-muted-foreground pt-4 border-t">
-                                Each "Auto Format" action costs 3 credits. Credits never expire.
+                                Each "Auto Format" action costs 1 credit. Credits never expire.
                             </p>
                         </div>
                     </div>
                 </div>
             </main>
             <SiteFooter reviewText="" setReviewText={() => {}} isSubmittingReview={false} userLoading={false} handleSubmitReview={() => {}} />
+
+            <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Sign up or Continue</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    To buy credits, please sign in or create an account with Google.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleGoogleSignIn}>
+                    <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.05 1.05-2.86 2.17-4.82 2.17-5.78 0-10.4-4.88-10.4-10.92S6.7 1.48 12.48 1.48c3.24 0 5.32 1.3 6.55 2.4l2.2-2.2C19.03 1.18 16.25 0 12.48 0 5.6 0 0 5.6 0 12.48s5.6 12.48 12.48 12.48c7.28 0 12.1-5.15 12.1-12.48 0-.8-.08-1.55-.2-2.32H12.48z"></path></svg>
+                    Continue with Google
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

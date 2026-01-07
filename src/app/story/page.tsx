@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import useEmblaCarousel from 'embla-carousel-react';
+import Image from 'next/image';
 
 // Custom hook to trigger animations when an element is in view
 const useAnimateOnScroll = (ref: React.RefObject<HTMLElement>) => {
@@ -44,12 +45,11 @@ const AnimateOnScroll = ({ children, className, delay = 0 }: { children: React.R
 };
 
 const heroImages = [
-   "65963.jpg",
-   "land.jpg",
-    "star.jpg", 
-    "house.jpg",
-
- ];
+  "https://images.unsplash.com/photo-1444703686981-a3abbc4d42e3?q=80&w=2070&auto=format&fit=crop", // Stars
+  "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=2070&auto=format&fit=crop", // Land
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop", // House
+  "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop", // Abstract code
+];
 
 const StoryPage = () => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, []);
@@ -87,6 +87,7 @@ const StoryPage = () => {
     }
   }, [emblaApi])
 
+
   return (
     <div className="bg-neutral-950 text-neutral-50 w-full overflow-x-hidden selection:bg-white/20 selection:text-white">
       {/* Vertical Lines */}
@@ -101,7 +102,7 @@ const StoryPage = () => {
         <nav className="w-full max-w-4xl flex items-center justify-between px-2 py-2 pr-6 border border-white/10 bg-neutral-900/80 backdrop-blur-xl rounded-full shadow-2xl">
           <Link href="/" className="flex items-center gap-3 pl-4">
             <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-black">
-              <img src="https://i.ibb.co/tPC17k0F/free-linkedin-logo-3d-icon-png-download-12257269.webp" alt="PostAI Logo" className="h-5 w-5" />
+              <Image src="/icon.png" alt="PostAI Logo" width={20} height={20} />
             </div>
             <span className="font-bricolage font-semibold text-lg tracking-tight">PostAI</span>
           </Link>
@@ -292,7 +293,7 @@ const StoryPage = () => {
             <div className="col-span-1 md:col-span-2">
                 <div className="flex items-center gap-2 mb-6">
                     <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground">
-                         <img src="https://i.ibb.co/tPC17k0F/free-linkedin-logo-3d-icon-png-download-12257269.webp" alt="PostAI Logo" className="h-5 w-5" />
+                         <Image src="/icon.png" alt="PostAI Logo" width={20} height={20} />
                     </div>
                     <h2 className="text-2xl font-bricolage font-semibold">PostAI</h2>
                 </div>
@@ -339,5 +340,3 @@ const StoryPage = () => {
 };
 
 export default StoryPage;
-
-    

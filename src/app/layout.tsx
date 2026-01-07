@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'PostAI - AI-Powered LinkedIn Content Formatting',
     description: 'Instantly format your LinkedIn posts for maximum readability and engagement. Our AI adds smart line breaks, highlights key phrases, and analyzes your content for tone and clarity.',
-    url: 'https://your-live-site-url.com', // Replace with your actual URL
+    url: 'https://linkedin-post-ai.vercel.app', // Replace with your actual URL
     siteName: 'PostAI',
     images: [
       {
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     google: 'WGdoPB1C5sq9ITs96lwQAtR1DRpLwcKfDCN9-taB9e8',
   },
   icons: {
-    icon: '/icon.webp',
+    icon: '/icon.png',
   },
 };
 
