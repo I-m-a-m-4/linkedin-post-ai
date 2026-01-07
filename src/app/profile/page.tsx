@@ -12,11 +12,9 @@ import {
   orderBy,
   onSnapshot,
   doc,
-  deleteDoc,
   writeBatch,
   getDocs,
   where,
-  updateDoc,
 } from 'firebase/firestore';
 import { deleteUser } from 'firebase/auth';
 import {
@@ -39,13 +37,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Gem, Loader2, LogOut, ExternalLink } from 'lucide-react';
+import { Gem, Loader2, LogOut, ExternalLink, Moon, Sun } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { SiteHeader } from '@/components/app/site-header';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
+import { useTheme } from 'next-themes';
 
 type UsageHistory = {
   id: string;
@@ -62,6 +61,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const { credits, loading: creditsLoading } = useUserCredits(user?.uid);
+  const { theme, setTheme } = useTheme();
 
   const [usageHistory, setUsageHistory] = useState<UsageHistory[]>([]);
   const [usageLoading, setUsageLoading] = useState(true);
@@ -99,19 +99,15 @@ export default function ProfilePage() {
     try {
         const batch = writeBatch(db);
         
-        // Don't delete posts as they are no longer saved
-        // Delete reviews
         const reviewsRef = collection(db, 'reviews');
         const reviewsQuery = query(reviewsRef, where("userId", "==", user.uid));
         const reviewsSnapshot = await getDocs(reviewsQuery);
         reviewsSnapshot.forEach(doc => batch.delete(doc.ref));
 
-        // Delete usage history
         const usageHistoryRef = collection(db, 'user_metadata', user.uid, 'usage_history');
         const usageHistorySnapshot = await getDocs(usageHistoryRef);
         usageHistorySnapshot.forEach(doc => batch.delete(doc.ref));
 
-        // Reset credits to 0 in metadata, but don't delete the doc
         const metadataRef = doc(db, 'user_metadata', user.uid);
         batch.update(metadataRef, { credits: 0 });
         
@@ -236,6 +232,30 @@ export default function ProfilePage() {
                         </CardContent>
                     </Card>
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <Card>
+                      <CardHeader>
+                          <CardTitle>Appearance</CardTitle>
+                          <CardDescription>Customize the look and feel of the app.</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium">Theme</p>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                            >
+                                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                                <span className="sr-only">Toggle theme</span>
+                            </Button>
+                          </div>
+                      </CardContent>
+                  </Card>
+                </div>
+
 
                 <section>
                     <Card className="border-destructive">
