@@ -16,6 +16,7 @@ import {
   writeBatch,
   getDocs,
   where,
+  updateDoc,
 } from 'firebase/firestore';
 import { deleteUser } from 'firebase/auth';
 import {
@@ -24,7 +25,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,28 +39,17 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Gem, Trash2, Loader2, LogOut, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { Gem, Loader2, LogOut, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { FormattedTextRenderer } from '@/components/app/formatted-text-renderer';
 import { SiteHeader } from '@/components/app/site-header';
 import Link from 'next/link';
-import { AnimatePresence, motion } from 'framer-motion';
-import { format } from 'date-fns';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-type Post = {
-  id: string;
-  formattedText: string;
-  createdAt: {
-    seconds: number;
-    nanoseconds: number;
-  };
-};
+import { format } from 'date-fns';
 
 type UsageHistory = {
   id: string;
-  action: 'purchase' | 'autoFormat' | 'adminGrant';
+  action: 'purchase' | 'autoFormat' | 'adminGrant' | 'monthly_grant';
   creditsSpent: number;
   timestamp: {
     seconds: number;
@@ -74,15 +63,11 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const { credits, loading: creditsLoading } = useUserCredits(user?.uid);
 
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [postsLoading, setPostsLoading] = useState(true);
   const [usageHistory, setUsageHistory] = useState<UsageHistory[]>([]);
   const [usageLoading, setUsageLoading] = useState(true);
 
-  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -90,20 +75,6 @@ export default function ProfilePage() {
       router.replace('/');
       return;
     }
-
-    setPostsLoading(true);
-    const postsRef = collection(db, 'users', user.uid, 'posts');
-    const qPosts = query(postsRef, orderBy('createdAt', 'desc'));
-
-    const unsubPosts = onSnapshot(qPosts, (snapshot) => {
-      const userPosts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Post));
-      setPosts(userPosts);
-      setPostsLoading(false);
-    }, (error) => {
-      console.error('Error fetching posts:', error);
-      toast({ title: 'Error', description: 'Could not fetch your posts.', variant: 'destructive' });
-      setPostsLoading(false);
-    });
 
     setUsageLoading(true);
     const usageRef = collection(db, 'user_metadata', user.uid, 'usage_history');
@@ -118,34 +89,8 @@ export default function ProfilePage() {
         setUsageLoading(false);
     });
 
-
-    return () => {
-        unsubPosts();
-        unsubUsage();
-    };
+    return () => unsubUsage();
   }, [user, authLoading, router, toast]);
-
-  const handleDeletePost = async (postId: string) => {
-    if (!user) return;
-    setDeletingPostId(postId);
-    try {
-      await deleteDoc(doc(db, 'users', user.uid, 'posts', postId));
-      toast({
-        title: 'Post Deleted',
-        description: 'Your post has been successfully removed.',
-        variant: 'success'
-      });
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      toast({
-        title: 'Error',
-        description: 'Could not delete post. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setDeletingPostId(null);
-    }
-  };
 
   const handleDeleteAccount = async () => {
     if (!user) return;
@@ -154,32 +99,29 @@ export default function ProfilePage() {
     try {
         const batch = writeBatch(db);
         
-        const postsRef = collection(db, 'users', user.uid, 'posts');
-        const postsSnapshot = await getDocs(postsRef);
-        postsSnapshot.forEach(doc => batch.delete(doc.ref));
-
-        const usageHistoryRef = collection(db, 'user_metadata', user.uid, 'usage_history');
-        const usageHistorySnapshot = await getDocs(usageHistoryRef);
-        usageHistorySnapshot.forEach(doc => batch.delete(doc.ref));
-
-        const metadataRef = doc(db, 'user_metadata', user.uid);
-        batch.delete(metadataRef);
-        
-        const userDocRef = doc(db, 'users', user.uid);
-        batch.delete(userDocRef);
-        
+        // Don't delete posts as they are no longer saved
+        // Delete reviews
         const reviewsRef = collection(db, 'reviews');
         const reviewsQuery = query(reviewsRef, where("userId", "==", user.uid));
         const reviewsSnapshot = await getDocs(reviewsQuery);
         reviewsSnapshot.forEach(doc => batch.delete(doc.ref));
 
+        // Delete usage history
+        const usageHistoryRef = collection(db, 'user_metadata', user.uid, 'usage_history');
+        const usageHistorySnapshot = await getDocs(usageHistoryRef);
+        usageHistorySnapshot.forEach(doc => batch.delete(doc.ref));
+
+        // Reset credits to 0 in metadata, but don't delete the doc
+        const metadataRef = doc(db, 'user_metadata', user.uid);
+        batch.update(metadataRef, { credits: 0 });
+        
         await batch.commit();
 
         await deleteUser(user);
 
         toast({
             title: 'Account Deleted',
-            description: 'Your account and all associated data have been removed.',
+            description: 'Your account has been removed. We hope to see you again!',
             variant: 'success'
         });
         router.push('/');
@@ -201,7 +143,6 @@ export default function ProfilePage() {
     }
 };
 
-
   if (authLoading || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -218,6 +159,8 @@ export default function ProfilePage() {
         return `Used "Auto Format"`;
       case 'adminGrant':
         return `Admin granted ${-item.creditsSpent} credits`;
+      case 'monthly_grant':
+        return `Monthly free credit`;
       default:
         return 'Credit usage';
     }
@@ -248,6 +191,7 @@ export default function ProfilePage() {
                   <Card>
                       <CardHeader>
                           <CardTitle>Your Credits</CardTitle>
+                          <CardDescription>You get 1 free credit per month if your balance is zero.</CardDescription>
                       </CardHeader>
                       <CardContent className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
@@ -293,58 +237,6 @@ export default function ProfilePage() {
                     </Card>
                 </div>
 
-
-                <section>
-                    <h2 className="text-2xl font-bold mb-4">Your Formatted Posts</h2>
-                    <div className="space-y-4">
-                        {postsLoading ? (
-                             [...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 w-full" />)
-                        ) : posts.length > 0 ? (
-                            posts.map(post => (
-                                <Card key={post.id}>
-                                    <CardContent className="p-4">
-                                        <AnimatePresence>
-                                            <motion.div
-                                                className="text-sm overflow-hidden"
-                                                initial={{ height: '8rem' }}
-                                                animate={{ height: expandedPostId === post.id ? 'auto' : '8rem' }}
-                                                transition={{ duration: 0.3 }}
-                                            >
-                                                <FormattedTextRenderer text={post.formattedText} />
-                                            </motion.div>
-                                        </AnimatePresence>
-                                    </CardContent>
-                                    <CardFooter className="p-4 flex justify-between items-center bg-muted/50">
-                                        <p className="text-xs text-muted-foreground">
-                                            Formatted on {new Date(post.createdAt.seconds * 1000).toLocaleDateString()}
-                                        </p>
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)}
-                                            >
-                                                {expandedPostId === post.id ? <ChevronUp className="mr-2 h-4 w-4"/> : <ChevronDown className="mr-2 h-4 w-4"/>}
-                                                {expandedPostId === post.id ? 'Collapse' : 'Expand'}
-                                            </Button>
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                onClick={() => handleDeletePost(post.id)}
-                                                disabled={deletingPostId === post.id}
-                                            >
-                                                {deletingPostId === post.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                            </Button>
-                                        </div>
-                                    </CardFooter>
-                                </Card>
-                            ))
-                        ) : (
-                            <p className="text-center text-muted-foreground py-8">You haven't formatted any posts yet.</p>
-                        )}
-                    </div>
-                </section>
-
                 <section>
                     <Card className="border-destructive">
                         <CardHeader>
@@ -357,7 +249,7 @@ export default function ProfilePage() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="font-medium">Delete Your Account</p>
-                                    <p className="text-sm text-muted-foreground">This will permanently delete your account, posts, and all associated data.</p>
+                                    <p className="text-sm text-muted-foreground">This will permanently delete your authentication record and reviews.</p>
                                 </div>
                                 <Button variant="destructive" onClick={() => setShowDeleteAccountDialog(true)}>
                                     Delete Account
@@ -374,7 +266,7 @@ export default function ProfilePage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+                This action cannot be undone. This will permanently delete your account and remove your reviews from our servers. Your credit balance will be reset to zero.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

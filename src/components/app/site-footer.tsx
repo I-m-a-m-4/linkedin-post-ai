@@ -41,7 +41,7 @@ export function SiteFooter({
                          <a href="https://github.com/i-m-a-m-4" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
                             <Github size={18}/>
                         </a>
-                         <a href="https://x.com/dev_imam" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
+                         <a href="https://x.com/dev_bime" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
                             <Twitter size={18}/>
                         </a>
                          <a href="https://www.linkedin.com/in/imam-bello" target="_blank" rel="noopener noreferrer" className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground transition-colors">
@@ -58,7 +58,7 @@ export function SiteFooter({
                 </div>
                 
                  <div className="flex flex-col gap-4">
-                    <h4 className="font-medium text-lg mb-2">Connect</h4>
+                    <h4 className="font-medium text-lg mb-2">Connect & Legal</h4>
                     {hasReviewFunctionality && (
                         <div className="flex flex-col gap-4 items-start w-full">
                             <div className="flex w-full items-center space-x-2">
@@ -86,6 +86,8 @@ export function SiteFooter({
                         </div>
                     )}
                      <a href="https://chat.whatsapp.com/Bk9AQC1xV039WzCPcD7tRg" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">WhatsApp</a>
+                     <Link href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">Privacy Policy</Link>
+                     <Link href="/terms-and-conditions" className="text-muted-foreground hover:text-primary transition-colors">Terms & Conditions</Link>
                 </div>
             </div>
             

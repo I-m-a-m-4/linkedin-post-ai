@@ -323,31 +323,9 @@ export default function Home() {
     }
   };
 
-  const savePost = async (formattedText: string, rawText: string) => {
-    if (!validUser) return;
-    try {
-        await addDoc(collection(db, 'users', user.uid, 'posts'), {
-            userId: user.uid,
-            originalText: rawText,
-            formattedText: formattedText,
-            createdAt: serverTimestamp(),
-        });
-    } catch (error) {
-        console.error("Error saving post:", error);
-    }
-  };
 
   const trackAnalyticsEvent = async (eventType: string) => {
-    if (!validUser) return;
-    try {
-      await addDoc(collection(db, "analyticsEvents"), {
-        userId: user.uid,
-        eventType: eventType,
-        timestamp: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error("Error tracking analytics event:", error);
-    }
+    // Analytics are now tracked inside the spendCredit function to ensure it's tied to a valid action
   };
 
   const handleAutoFormat = useCallback(async () => {
@@ -376,10 +354,17 @@ export default function Home() {
       if (!isAdmin) {
         await spendCredit();
       }
-      trackAnalyticsEvent('autoFormatClick');
     } catch (error) {
-      setShowPurchaseDialog(true);
-      return;
+        console.error("Credit spending failed:", error);
+        toast({
+            title: 'Action Failed',
+            description: (error as Error).message || "Could not complete the action.",
+            variant: 'destructive',
+        });
+        if ((error as Error).message.includes("Insufficient credits")) {
+            setShowPurchaseDialog(true);
+        }
+        return;
     }
     
     setReadabilityScore(null);
@@ -433,8 +418,6 @@ export default function Home() {
             if (editorRef.current) {
                 editorRef.current.innerHTML = processedHtml;
             }
-
-            savePost(processedHtml, rawText);
 
             setShowConfetti(true);
             setTimeout(() => setShowConfetti(false), 5000); 

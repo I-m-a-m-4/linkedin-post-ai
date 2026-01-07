@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: 'PostAI',
     images: [
       {
-        url: 'https://i.ibb.co/x9V4H82/20251208-0847-Linked-In-Post-Design-remix-01kbyesaq2emfrkznsprtzrcwf.png', // Must be an absolute URL
+        url: '/og-image.png',
         width: 1200,
         height: 630,
       },
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'PostAI - AI-Powered LinkedIn Content Formatting',
     description: 'Instantly format your LinkedIn posts for maximum readability and engagement. Our AI adds smart line breaks, highlights key phrases, and analyzes your content for tone and clarity.',
-    images: ['https://i.ibb.co/x9V4H82/20251208-0847-Linked-In-Post-Design-remix-01kbyesaq2emfrkznsprtzrcwf.png'], // Must be an absolute URL
+    images: ['/og-image.png'],
   },
   verification: {
     google: 'WGdoPB1C5sq9ITs96lwQAtR1DRpLwcKfDCN9-taB9e8',
