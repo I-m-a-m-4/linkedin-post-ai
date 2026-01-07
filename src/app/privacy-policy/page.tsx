@@ -1,4 +1,3 @@
-
 'use client';
 
 // src/app/privacy-policy/page.tsx
@@ -74,70 +73,86 @@ export default function PrivacyPolicyPage() {
               <CardTitle className="text-3xl font-bold">Privacy Policy</CardTitle>
               <p className="text-muted-foreground">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </CardHeader>
-            <CardContent className="prose prose-lg dark:prose-invert max-w-none prose-h2:font-semibold prose-h2:text-xl prose-h2:mb-2 prose-h2:mt-6 prose-p:leading-relaxed">
-              <p>
+            <CardContent className="space-y-6">
+              <p className="text-base leading-relaxed">
                 Welcome to PostAI. We are committed to protecting your privacy. This Privacy Policy explains how we
                 collect, use, and share information about you when you use our service.
               </p>
 
-              <h2>Information We Collect</h2>
-              <p>We collect information in the following ways:</p>
-              <ul>
-                <li>
-                  <strong>Information you provide us:</strong> This includes your Google account information (email address,
-                  name, profile picture) when you sign up and log in. We also collect any feedback or reviews you submit.
-                </li>
-                <li>
-                  <strong>Information we collect automatically:</strong> When you use our service, we may log usage data,
-                  such as when you use the "Auto Format" feature. We do not save or store the content of the posts you
-                  format.
-                </li>
-              </ul>
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold mt-6">Information We Collect</h2>
+                <p className="text-base leading-relaxed">We collect information in the following ways:</p>
+                <ul className="list-disc pl-6 space-y-2 text-base leading-relaxed">
+                  <li>
+                    <strong>Information you provide us:</strong> This includes your Google account information (email address,
+                    name, profile picture) when you sign up and log in. We also collect any feedback or reviews you submit.
+                  </li>
+                  <li>
+                    <strong>Information we collect automatically:</strong> When you use our service, we may log usage data,
+                    such as when you use the "Auto Format" feature. We do not save or store the content of the posts you
+                    format.
+                  </li>
+                </ul>
+              </div>
 
-              <h2>How We Use Your Information</h2>
-              <p>We use the information we collect to:</p>
-              <ul>
-                <li>Provide, maintain, and improve our service.</li>
-                <li>Manage your account and credit balance.</li>
-                <li>Communicate with you, including responding to your comments and questions.</li>
-                <li>Monitor and analyze trends, usage, and activities in connection with our service.</li>
-              </ul>
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold mt-6">How We Use Your Information</h2>
+                <p className="text-base leading-relaxed">We use the information we collect to:</p>
+                <ul className="list-disc pl-6 space-y-2 text-base leading-relaxed">
+                  <li>Provide, maintain, and improve our service.</li>
+                  <li>Manage your account and credit balance.</li>
+                  <li>Communicate with you, including responding to your comments and questions.</li>
+                  <li>Monitor and analyze trends, usage, and activities in connection with our service.</li>
+                </ul>
+              </div>
 
-              <h2>Information Sharing</h2>
-              <p>
-                We do not sell your personal information. We may share information as follows:
-              </p>
-              <ul>
-                <li>With your consent.</li>
-                <li>For legal reasons, such as to comply with a law, regulation, or legal process.</li>
-                <li>
-                  With third-party service providers who perform services on our behalf, such as payment processing (Paystack)
-                  and AI model providers (Google Gemini), subject to confidentiality obligations.
-                </li>
-              </ul>
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold mt-6">Information Sharing</h2>
+                <p className="text-base leading-relaxed">
+                  We do not sell your personal information. We may share information as follows:
+                </p>
+                <ul className="list-disc pl-6 space-y-2 text-base leading-relaxed">
+                  <li>With your consent.</li>
+                  <li>For legal reasons, such as to comply with a law, regulation, or legal process.</li>
+                  <li>
+                    With third-party service providers who perform services on our behalf, such as payment processing (<strong>Paystack</strong>)
+                    and AI model providers (<strong>Google Gemini</strong>), subject to confidentiality obligations.
+                  </li>
+                </ul>
+              </div>
 
-              <h2>Data Storage and Security</h2>
-              <p>
-                Your user profile, credit balance, and transaction history are stored securely in Google Firebase. We do not
-                store the text of the LinkedIn posts you format. We take reasonable measures to help protect information
-                about you from loss, theft, misuse, and unauthorized access.
-              </p>
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold mt-6">Data Storage and Security</h2>
+                <p className="text-base leading-relaxed">
+                  Your user profile, credit balance, and transaction history are stored securely in <strong>Google Firebase</strong>. We do not
+                  store the text of the LinkedIn posts you format. We take reasonable measures to help protect information
+                  about you from loss, theft, misuse, and unauthorized access.
+                </p>
+              </div>
 
-              <h2>Your Choices</h2>
-              <p>
-                You have the right to access, update, or delete your personal information. You can delete your account from
-                your profile page. Please note that deleting your account will remove your authentication record and reviews, and
-                your credit balance will be reset to zero to prevent abuse of the free credit system.
-              </p>
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold mt-6">Your Choices</h2>
+                <p className="text-base leading-relaxed">
+                  You have the right to access, update, or delete your personal information. You can delete your account from
+                  your profile page. Please note that deleting your account will remove your authentication record and reviews, and
+                  your credit balance will be reset to zero to prevent abuse of the free credit system.
+                </p>
+              </div>
 
-              <h2>Changes to This Policy</h2>
-              <p>
-                We may change this Privacy Policy from time to time. If we make changes, we will notify you by revising the
-                date at the top of the policy and, in some cases, we may provide you with additional notice.
-              </p>
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold mt-6">Changes to This Policy</h2>
+                <p className="text-base leading-relaxed">
+                  We may change this Privacy Policy from time to time. If we make changes, we will notify you by revising the
+                  date at the top of the policy and, in some cases, we may provide you with additional notice.
+                </p>
+              </div>
 
-              <h2>Contact Us</h2>
-              <p>If you have any questions about this Privacy Policy, please contact us at belloimam431@gmail.com.</p>
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold mt-6">Contact Us</h2>
+                <p className="text-base leading-relaxed">
+                  If you have any questions about this Privacy Policy, please contact us at <strong>belloimam431@gmail.com</strong>.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>

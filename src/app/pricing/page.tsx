@@ -1,3 +1,4 @@
+
 // src/app/pricing/page.tsx
 'use client';
 
@@ -23,6 +24,7 @@ import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 const PAYSTACK_PUBLIC_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '';
 
 const creditTiers = [
+    { credits: 1, price: 100 },
     { credits: 10, price: 1000 },
     { credits: 25, price: 2250 },
     { credits: 50, price: 4000 },
