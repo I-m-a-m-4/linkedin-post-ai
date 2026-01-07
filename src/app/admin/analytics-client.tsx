@@ -156,89 +156,72 @@ export default function AnalyticsClient() {
     if (!user) return;
 
     const unsubscribes: Unsubscribe[] = [];
+    const userProfiles: { [key: string]: UserProfile } = {};
 
-    const fetchData = async () => {
-      setLoading(true);
-      const userProfiles: { [key: string]: UserProfile } = {};
+    const fetchUserProfiles = async (userIds: string[]) => {
+        const newProfiles: { [key: string]: UserProfile } = {};
+        const idsToFetch = userIds.filter(id => !userProfiles[id]);
+        if (idsToFetch.length === 0) return newProfiles;
 
-      const fetchUserProfiles = async (userIds: string[]) => {
-          const newProfiles: { [key: string]: UserProfile } = {};
-          await Promise.all(
-              userIds.map(async (id) => {
-                  if (!userProfiles[id] && !newProfiles[id]) {
-                      const userDocRef = doc(db, 'users', id);
-                      const userDocSnap = await getDoc(userDocRef);
-                      if (userDocSnap.exists()) {
-                          newProfiles[id] = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
-                      }
-                  }
-              })
-          );
-          return newProfiles;
-      };
-
-      const usersRef = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
-      const unsubUsers = onSnapshot(usersRef, (snapshot) => {
-        const usersData = snapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as UserProfile)
+        await Promise.all(
+            idsToFetch.map(async (id) => {
+                const userDocRef = doc(db, 'users', id);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    newProfiles[id] = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
+                }
+            })
         );
-        setUsers(usersData);
-        usersData.forEach(u => userProfiles[u.id] = u);
-      }, (error) => console.error("Error fetching users:", error));
-      unsubscribes.push(unsubUsers);
-
-      const eventsRef = collection(db, 'analyticsEvents');
-      const unsubEvents = onSnapshot(eventsRef, (snapshot) => {
-        const eventsData = snapshot.docs.map(
-          (doc) => ({ ...doc.data(), id: doc.id } as AnalyticsEvent)
-        );
-        setEvents(eventsData);
-      }, (error) => console.error("Error fetching events:", error));
-      unsubscribes.push(unsubEvents);
-
-      const reviewsRef = query(collection(db, 'reviews'), orderBy('timestamp', 'desc'));
-      const unsubReviews = onSnapshot(reviewsRef, async (snapshot) => {
-        const reviewsData = snapshot.docs.map(
-          (doc) => ({ ...doc.data(), id: doc.id } as Review)
-        );
-        const userIds = [...new Set(reviewsData.map(r => r.userId).filter(id => !userProfiles[id]))];
-        if(userIds.length > 0) {
-            const newProfiles = await fetchUserProfiles(userIds);
-            Object.assign(userProfiles, newProfiles);
-        }
-        const reviewsWithUsers = reviewsData.map(review => ({...review, userProfile: userProfiles[review.userId]}));
-        setReviews(reviewsWithUsers);
-      }, (error) => console.error("Error fetching reviews:", error));
-      unsubscribes.push(unsubReviews);
-      
-      const postsRef = collectionGroup(db, 'posts');
-      const unsubPosts = onSnapshot(postsRef, (snapshot) => {
-        const postsData = snapshot.docs.map(
-          (doc) => ({ ...doc.data(), id: doc.id } as Post)
-        );
-        setPosts(postsData);
-      }, (error) => console.error("Error fetching posts:", error));
-      unsubscribes.push(unsubPosts);
-
-       const purchasesRef = query(collection(db, 'purchases'), orderBy('timestamp', 'desc'));
-       const unsubPurchases = onSnapshot(purchasesRef, async (snapshot) => {
-           const purchasesData = snapshot.docs.map(
-               (doc) => ({ ...doc.data(), id: doc.id } as Purchase)
-           );
-           const userIds = [...new Set(purchasesData.map(p => p.userId).filter(id => !userProfiles[id]))];
-           if (userIds.length > 0) {
-               const newProfiles = await fetchUserProfiles(userIds);
-               Object.assign(userProfiles, newProfiles);
-           }
-           const purchasesWithUsers = purchasesData.map(purchase => ({...purchase, userProfile: userProfiles[purchase.userId]}));
-           setPurchases(purchasesWithUsers);
-       }, (error) => console.error("Error fetching purchases:", error));
-       unsubscribes.push(unsubPurchases);
-
-      setLoading(false);
+        Object.assign(userProfiles, newProfiles);
+        return newProfiles;
     };
 
-    fetchData();
+    const usersRef = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+    unsubscribes.push(onSnapshot(usersRef, (snapshot) => {
+      const usersData = snapshot.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as UserProfile)
+      );
+      setUsers(usersData);
+      usersData.forEach(u => userProfiles[u.id] = u);
+      setLoading(false);
+    }, (error) => console.error("Error fetching users:", error)));
+
+    const eventsRef = collection(db, 'analyticsEvents');
+    unsubscribes.push(onSnapshot(eventsRef, (snapshot) => {
+      const eventsData = snapshot.docs.map(
+        (doc) => ({ ...doc.data(), id: doc.id } as AnalyticsEvent)
+      );
+      setEvents(eventsData);
+    }, (error) => console.error("Error fetching events:", error)));
+
+    const reviewsRef = query(collection(db, 'reviews'), orderBy('timestamp', 'desc'));
+    unsubscribes.push(onSnapshot(reviewsRef, async (snapshot) => {
+      const reviewsData = snapshot.docs.map(
+        (doc) => ({ ...doc.data(), id: doc.id } as Review)
+      );
+      await fetchUserProfiles(reviewsData.map(r => r.userId));
+      const reviewsWithUsers = reviewsData.map(review => ({...review, userProfile: userProfiles[review.userId]}));
+      setReviews(reviewsWithUsers);
+    }, (error) => console.error("Error fetching reviews:", error)));
+    
+    const postsQuery = query(collectionGroup(db, 'posts'));
+    unsubscribes.push(onSnapshot(postsQuery, (snapshot) => {
+      const postsData = snapshot.docs.map(
+        (doc) => ({ ...doc.data(), id: doc.id } as Post)
+      );
+      setPosts(postsData);
+    }, (error) => console.error("Error fetching posts:", error)));
+
+    const purchasesRef = query(collection(db, 'purchases'), orderBy('timestamp', 'desc'));
+    unsubscribes.push(onSnapshot(purchasesRef, async (snapshot) => {
+        const purchasesData = snapshot.docs.map(
+            (doc) => ({ ...doc.data(), id: doc.id } as Purchase)
+        );
+        await fetchUserProfiles(purchasesData.map(p => p.userId));
+        const purchasesWithUsers = purchasesData.map(purchase => ({...purchase, userProfile: userProfiles[purchase.userId]}));
+        setPurchases(purchasesWithUsers);
+    }, (error) => console.error("Error fetching purchases:", error)));
+
 
     return () => {
       unsubscribes.forEach((unsub) => unsub());

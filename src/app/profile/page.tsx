@@ -158,6 +158,10 @@ export default function ProfilePage() {
         const postsSnapshot = await getDocs(postsRef);
         postsSnapshot.forEach(doc => batch.delete(doc.ref));
 
+        const usageHistoryRef = collection(db, 'user_metadata', user.uid, 'usage_history');
+        const usageHistorySnapshot = await getDocs(usageHistoryRef);
+        usageHistorySnapshot.forEach(doc => batch.delete(doc.ref));
+
         const metadataRef = doc(db, 'user_metadata', user.uid);
         batch.delete(metadataRef);
         
@@ -221,7 +225,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-        <SiteHeader user={user} credits={credits} creditsLoading={creditsLoading} userLoading={authLoading} onLogin={()=>{}} />
+        <SiteHeader user={user} onLogin={() => {}} credits={credits} creditsLoading={creditsLoading || authLoading} userLoading={authLoading} />
         <main className="flex-1 bg-muted/20">
             <div className="container mx-auto max-w-4xl py-12 px-4 space-y-8">
                 <header className="flex flex-col sm:flex-row items-center gap-6">
