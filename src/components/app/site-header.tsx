@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button"
-import { Gem, LogOut, Loader2, User, HelpCircle } from "lucide-react"
+import { Gem, LogOut, Loader2, User } from "lucide-react"
 import type { User as FirebaseUser } from 'firebase/auth';
 import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
@@ -60,13 +60,14 @@ const UserNav = ({ user }: { user: FirebaseUser }) => {
 
 export function SiteHeader({ user, onLogin, credits, creditsLoading, userLoading }: { user: FirebaseUser | null, onLogin: () => void, credits: number | null, creditsLoading: boolean, userLoading: boolean }) {
     const isAdmin = user?.email === ADMIN_EMAIL;
+    const validUser = user && user.email; // A user is valid if they are not anonymous
 
     const renderCredits = () => {
-        if (creditsLoading || (user && credits === null)) {
+        if (creditsLoading || (validUser && credits === null)) {
             return <Skeleton className="h-5 w-16" />;
         }
-        if (isAdmin) {
-            return null; // Admin does not need to see credits
+        if (isAdmin || !validUser) {
+            return null;
         }
         return (
              <TooltipProvider>
@@ -98,7 +99,7 @@ export function SiteHeader({ user, onLogin, credits, creditsLoading, userLoading
             <nav className="ml-auto flex items-center gap-4">
                 {userLoading ? <Skeleton className="h-8 w-24 rounded-md" /> : (
                     <>
-                        {user ? (
+                        {validUser ? (
                             <>
                                 {isAdmin && (
                                     <Button asChild variant="outline">

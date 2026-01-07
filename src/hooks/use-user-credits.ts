@@ -14,7 +14,7 @@ export function useUserCredits(userId: string | undefined) {
   useEffect(() => {
     if (!userId) {
       setLoading(false);
-      setCredits(0);
+      setCredits(0); // For non-logged-in users, show 0 credits.
       return;
     }
 
@@ -23,6 +23,8 @@ export function useUserCredits(userId: string | undefined) {
       if (docSnap.exists()) {
         setCredits(docSnap.data().credits);
       } else {
+        // User has a doc, but no metadata yet.
+        // We will create this document on their first action.
         setCredits(FREE_CREDITS);
       }
       setLoading(false);

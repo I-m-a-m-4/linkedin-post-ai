@@ -227,7 +227,11 @@ export default function Home() {
 
   const [user, setUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(true);
-  const { credits, loading: creditsLoading, spendCredit } = useUserCredits(user?.uid);
+  
+  // A user is only considered "valid" if they are logged in with Google (have an email)
+  const validUser = user && user.email;
+  const { credits, loading: creditsLoading, spendCredit } = useUserCredits(validUser ? user.uid : undefined);
+  
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
 
@@ -320,7 +324,7 @@ export default function Home() {
   };
 
   const savePost = async (formattedText: string, rawText: string) => {
-    if (!user) return;
+    if (!validUser) return;
     try {
         await addDoc(collection(db, 'users', user.uid, 'posts'), {
             userId: user.uid,
@@ -334,7 +338,7 @@ export default function Home() {
   };
 
   const trackAnalyticsEvent = async (eventType: string) => {
-    if (!user) return;
+    if (!validUser) return;
     try {
       await addDoc(collection(db, "analyticsEvents"), {
         userId: user.uid,
@@ -347,7 +351,7 @@ export default function Home() {
   };
 
   const handleAutoFormat = useCallback(async () => {
-    if (!user) {
+    if (!validUser) {
       setShowLoginDialog(true);
       return;
     }
@@ -369,7 +373,9 @@ export default function Home() {
     }
 
     try {
-      await spendCredit();
+      if (!isAdmin) {
+        await spendCredit();
+      }
       trackAnalyticsEvent('autoFormatClick');
     } catch (error) {
       setShowPurchaseDialog(true);
@@ -461,7 +467,7 @@ export default function Home() {
             }, 600);
         }
     });
-  }, [spendCredit, toast, user, credits]);
+  }, [spendCredit, toast, user, validUser, credits]);
 
   
   const applyStyle = (command: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'insertUnorderedList' | 'insertOrderedList' | 'unicode' | 'uppercase', value?: any) => {
@@ -594,7 +600,7 @@ export default function Home() {
 
     setIsSubmittingReview(true);
     
-    if (!user) {
+    if (!validUser) {
         setShowLoginDialog(true);
         setIsSubmittingReview(false);
         return;
