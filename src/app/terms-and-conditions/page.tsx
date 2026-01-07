@@ -1,20 +1,78 @@
+
+'use client';
+
 // src/app/terms-and-conditions/page.tsx
 import { SiteHeader } from '@/components/app/site-header';
 import { SiteFooter } from '@/components/app/site-footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '@/lib/firebase';
+import { useUserCredits } from '@/hooks/use-user-credits';
+import { useState } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function TermsAndConditionsPage() {
+    const [user, authLoading] = useAuthState(auth);
+    const { credits, loading: creditsLoading } = useUserCredits(user?.uid);
+    const [showLoginDialog, setShowLoginDialog] = useState(false);
+    const { toast } = useToast();
+
+    const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, {
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      setShowLoginDialog(false);
+      toast({
+        title: 'Login Successful',
+        description: 'You are now logged in.',
+        variant: 'success'
+      });
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      toast({
+        title: 'Login Failed',
+        description: 'Could not sign in with Google. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
   return (
     <div className="flex min-h-dvh w-full flex-col font-inter">
-      <SiteHeader user={null} onLogin={() => {}} credits={null} creditsLoading={false} userLoading={false} />
-      <main className="flex-1">
-        <div className="container mx-auto max-w-3xl py-16 px-4">
+      <SiteHeader user={user} onLogin={() => setShowLoginDialog(true)} credits={credits} creditsLoading={creditsLoading || authLoading} userLoading={authLoading} />
+      <main className="flex-1 bg-muted/20 py-16">
+        <div className="container mx-auto max-w-3xl px-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-3xl font-bold">Terms and Conditions</CardTitle>
-              <p className="text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
+              <p className="text-muted-foreground">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </CardHeader>
-            <CardContent className="prose prose-lg dark:prose-invert max-w-none">
+            <CardContent className="prose prose-lg dark:prose-invert max-w-none prose-h2:font-semibold prose-h2:text-xl prose-h2:mb-2 prose-h2:mt-6 prose-p:leading-relaxed">
               <p>
                 Please read these Terms and Conditions ("Terms") carefully before using the PostAI service (the "Service")
                 operated by Imam Bello ("us", "we", or "our").
@@ -89,7 +147,7 @@ export default function TermsAndConditionsPage() {
                 conflict of law provisions.
               </p>
 
-              <h2>11. Changes to Terms</h2>
+              <h2> <b>11. Changes to Terms</b></h2> 
               <p>
                 We reserve the right, at our sole discretion, to modify or replace these Terms at any time. We will provide
                 notice of any changes by posting the new Terms on this page.
@@ -102,6 +160,24 @@ export default function TermsAndConditionsPage() {
         </div>
       </main>
       <SiteFooter reviewText="" setReviewText={() => {}} isSubmittingReview={false} userLoading={false} handleSubmitReview={() => {}} />
+
+       <AlertDialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Please Log In</AlertDialogTitle>
+              <AlertDialogDescription>
+                To continue, please sign in with your Google account.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleGoogleSignIn}>
+                <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.05 1.05-2.86 2.17-4.82 2.17-5.78 0-10.4-4.88-10.4-10.92S6.7 1.48 12.48 1.48c3.24 0 5.32 1.3 6.55 2.4l2.2-2.2C19.03 1.18 16.25 0 12.48 0 5.6 0 0 5.6 0 12.48s5.6 12.48 12.48 12.48c7.28 0 12.1-5.15 12.1-12.48 0-.8-.08-1.55-.2-2.32H12.48z"></path></svg>
+                Continue with Google
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }
