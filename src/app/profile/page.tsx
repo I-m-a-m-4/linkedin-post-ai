@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -86,7 +87,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      router.push('/');
+      router.replace('/');
       return;
     }
 

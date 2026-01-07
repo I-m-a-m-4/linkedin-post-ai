@@ -96,22 +96,30 @@ export function SiteHeader({ user, onLogin, credits, creditsLoading, userLoading
                 </Link>
             </div>
             <nav className="ml-auto flex items-center gap-4">
-                {isAdmin && (
-                     <Button asChild variant="outline">
-                        <Link href="/admin">Admin Dashboard</Link>
-                    </Button>
-                )}
-                {user && !isAdmin && (
-                    <Link href="/pricing" className={cn(
-                        "rounded-full bg-muted px-3 py-1.5 cursor-pointer transition-colors hover:bg-muted/80"
-                    )}>
-                       {renderCredits()}
-                    </Link>
-                )}
-                {userLoading ? <Skeleton className="h-8 w-8 rounded-full" /> : user ? <UserNav user={user} /> : (
-                  <Button onClick={onLogin} variant="outline" className="border-primary text-primary hover:bg-primary/10">
-                    Login
-                  </Button>
+                {userLoading ? <Skeleton className="h-8 w-24 rounded-md" /> : (
+                    <>
+                        {user ? (
+                            <>
+                                {isAdmin && (
+                                    <Button asChild variant="outline">
+                                        <Link href="/admin">Admin Dashboard</Link>
+                                    </Button>
+                                )}
+                                {!isAdmin && (
+                                    <Link href="/pricing" className={cn(
+                                        "rounded-full bg-muted px-3 py-1.5 cursor-pointer transition-colors hover:bg-muted/80"
+                                    )}>
+                                    {renderCredits()}
+                                    </Link>
+                                )}
+                                <UserNav user={user} />
+                            </>
+                        ) : (
+                          <Button onClick={onLogin} variant="outline" className="border-primary text-primary hover:bg-primary/10">
+                            Login
+                          </Button>
+                        )}
+                    </>
                 )}
             </nav>
         </header>
