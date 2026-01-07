@@ -9,7 +9,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Gem, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '../ui/button';
 import { useRouter } from 'next/navigation';
 
@@ -26,7 +27,7 @@ export function PurchaseCreditsDialog({ open, onOpenChange }: { open: boolean; o
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 mx-auto mb-4">
-              <Gem className="h-6 w-6 text-primary" />
+              <Image src="/coin.png" alt="Credits" width={28} height={28} />
           </div>
           <AlertDialogTitle className="text-center text-xl">You're Out of Credits!</AlertDialogTitle>
           <AlertDialogDescription className="text-center">

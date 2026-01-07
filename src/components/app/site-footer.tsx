@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Github, Linkedin, Send, Loader2, Twitter } from "lucide-react"
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface SiteFooterProps {
     reviewText: string;
@@ -64,7 +65,7 @@ export function SiteFooter({
                                     placeholder="Leave a review..."
                                     value={reviewText}
                                     onChange={(e) => setReviewText(e.target.value)}
-                                    className="min-h-12 resize-none bg-background/80 border-muted"
+                                    className={cn("min-h-12 resize-none bg-background/80 border-muted text-foreground")}
                                     disabled={isSubmittingReview}
                                 />
                                 <Button 
@@ -96,5 +97,3 @@ export function SiteFooter({
         </footer>
     )
 }
-
-    

@@ -12,7 +12,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Users, MousePointerClick, UserCheck, MessageSquare, BatteryCharging, Trash2, Loader2, BarChart, TrendingUp, Users2, Activity, Mail } from "lucide-react";
+import { Users, MousePointerClick, UserCheck, MessageSquare, BatteryCharging, Trash2, Loader2, BarChart, TrendingUp, Users2, Activity, Mail, ExternalLink } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -223,6 +223,8 @@ export default function AnalyticsClient() {
 
   const apiUsagePercentage = Math.min(((analyticsData.totalClicks || 0) / API_QUOTA) * 100, 100);
 
+  const geminiConsoleUrl = `https://aistudio.google.com/app/u/0/usage?timeRange=last-hour&project=format-iq`;
+
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
         <div className="mb-2">
@@ -330,16 +332,18 @@ export default function AnalyticsClient() {
                         <p className="text-xs text-muted-foreground">Average user engagement</p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">API Credits</CardTitle>
-                        <BatteryCharging className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{analyticsData.totalClicks}<span className="text-sm text-muted-foreground">/{API_QUOTA}</span></div>
-                         <Progress value={apiUsagePercentage} className="mt-2 h-2" />
-                    </CardContent>
-                </Card>
+                <a href={geminiConsoleUrl} target="_blank" rel="noopener noreferrer" className="block hover:scale-[1.02] transition-transform">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">API Usage</CardTitle>
+                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">Monitor</div>
+                            <p className="text-xs text-muted-foreground">Check Gemini API limits</p>
+                        </CardContent>
+                    </Card>
+                </a>
             </div>
             <Card className="lg:col-span-2">
               <CardHeader>
@@ -413,3 +417,5 @@ export default function AnalyticsClient() {
     </div>
   );
 }
+
+    

@@ -374,10 +374,10 @@ export default function Home() {
             console.error('Error during AI processing:', error);
             if (error.message && (error.message.includes('429') || error.message.includes('Quota'))) {
                 toast({
-                    title: "API Quota Reached",
-                    description: "You've exceeded the request limit. Please try again later.",
+                    title: "We're experiencing high traffic",
+                    description: "Please try again in a few moments. We're working on it!",
                     duration: 9000,
-                    variant: "destructive",
+                    variant: "default",
                 });
             } else {
                 toast({
@@ -1114,3 +1114,5 @@ export default function Home() {
     </TooltipProvider>
   );
 }
+
+    

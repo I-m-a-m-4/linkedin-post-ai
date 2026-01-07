@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, runTransaction, serverTimestamp, collection } from 'firebase/firestore';
+import { doc, onSnapshot, runTransaction, serverTimestamp, collection, writeBatch, getDoc, setDoc } from 'firebase/firestore';
 
 const FREE_CREDITS = 2;
 const FORMAT_COST = 3;
@@ -52,20 +52,20 @@ export function useUserCredits(userId: string | undefined) {
       await runTransaction(db, async (transaction) => {
         const userMetaDoc = await transaction.get(userMetaRef);
         
+        let currentCredits;
+
         if (!userMetaDoc.exists()) {
           // This is a new user's first action. Create their doc with initial credits.
-          // The security rule will validate that `credits` is exactly `FREE_CREDITS`.
-          transaction.set(userMetaRef, { 
+          const initialData = { 
               userId, 
               credits: FREE_CREDITS, 
               createdAt: serverTimestamp() 
-          });
-          // After setting, we will proceed to the update logic outside this if-block.
+          };
+          transaction.set(userMetaRef, initialData);
+          currentCredits = FREE_CREDITS;
+        } else {
+          currentCredits = userMetaDoc.data().credits;
         }
-
-        // Now, get the latest state of the document within the transaction.
-        const freshMetaDoc = await transaction.get(userMetaRef);
-        const currentCredits = freshMetaDoc.data()?.credits ?? FREE_CREDITS;
 
         // Decrement credits
         const newCredits = currentCredits - FORMAT_COST;

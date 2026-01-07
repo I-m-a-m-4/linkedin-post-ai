@@ -1,10 +1,11 @@
 
 import { Button } from "@/components/ui/button"
-import { Linkedin, Gem, Star, Loader2 } from "lucide-react"
+import { Linkedin, Star } from "lucide-react"
 import { User } from 'firebase/auth';
 import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const ADMIN_EMAIL = 'belloimam431@gmail.com';
 
@@ -25,7 +26,7 @@ export function SiteHeader({ user, credits, creditsLoading }: { user: User | nul
         }
         return (
             <div className="flex items-center gap-1.5 text-sm font-semibold">
-                <Gem className="h-4 w-4 text-primary" />
+                <Image src="/coin.png" alt="Credits" width={16} height={16} />
                 <span>{credits} Credits</span>
             </div>
         );

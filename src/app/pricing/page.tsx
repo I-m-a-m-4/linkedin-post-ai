@@ -2,13 +2,14 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { SiteHeader } from '@/components/app/site-header';
 import { SiteFooter } from '@/components/app/site-footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, Gem, Zap, Loader2 } from 'lucide-react';
+import { Check, Zap, Loader2, DollarSign, LocateFixed } from 'lucide-react';
 import { usePaystackPayment, PaystackProps } from 'react-paystack';
 import { auth, db } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -16,44 +17,53 @@ import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { useUserCredits } from '@/hooks/use-user-credits';
 import { useRouter } from 'next/navigation';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const PAYSTACK_PUBLIC_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '';
 
 const creditTiers = [
-    { credits: 3, price: 100 },
-    { credits: 10, price: 300 },
-    { credits: 20, price: 500 },
-    { credits: 50, price: 1000 },
-    { credits: 100, price: 1800 },
+    { credits: 3, priceNGN: 300, priceUSD: 2 },
+    { credits: 10, priceNGN: 1000, priceUSD: 5 },
+    { credits: 20, priceNGN: 1800, priceUSD: 9 },
+    { credits: 50, priceNGN: 4000, priceUSD: 20 },
+    { credits: 100, priceNGN: 7500, priceUSD: 35 },
 ];
+
+const NairaIcon = () => (
+    <span className="font-sans font-bold">&#8358;</span>
+);
 
 export default function PricingPage() {
     const [user, authLoading] = useAuthState(auth);
     const { credits, loading: creditsLoading } = useUserCredits(user?.uid);
-    const [selectedTierIndex, setSelectedTierIndex] = useState(0);
+    const [selectedTierIndex, setSelectedTierIndex] = useState(1);
+    const [currency, setCurrency] = useState<'NGN' | 'USD'>('NGN');
     const [isProcessing, setIsProcessing] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
 
     const selectedTier = creditTiers[selectedTierIndex];
-    const nairaAmount = selectedTier.price;
+    const amount = currency === 'NGN' ? selectedTier.priceNGN : selectedTier.priceUSD;
+    const currencySymbol = currency === 'NGN' ? <NairaIcon /> : '$';
 
     const [config, setConfig] = useState<PaystackProps>({
         reference: (new Date()).getTime().toString(),
         email: "guest@postai.com",
-        amount: selectedTier.price * 100,
+        amount: amount * 100,
         publicKey: PAYSTACK_PUBLIC_KEY,
+        currency: currency,
     });
     
     useEffect(() => {
         const newConfig = {
             reference: (new Date()).getTime().toString(),
             email: user?.isAnonymous ? "guest@postai.com" : (user?.email || "guest@postai.com"),
-            amount: nairaAmount * 100, // Amount in kobo
+            amount: amount * 100,
             publicKey: PAYSTACK_PUBLIC_KEY,
+            currency: currency,
         };
         setConfig(newConfig);
-    }, [nairaAmount, user]);
+    }, [amount, currency, user]);
 
 
     const addCredits = useCallback(async () => {
@@ -90,7 +100,7 @@ export default function PricingPage() {
     }, [addCredits]);
 
     const onClose = () => {
-        console.log('Paystack dialog closed');
+        // console.log('Paystack dialog closed');
     };
 
     const initializePayment = usePaystackPayment(config);
@@ -113,7 +123,7 @@ export default function PricingPage() {
             return;
         }
         if (user) {
-            initializePayment(onSuccess, onClose);
+            initializePayment({onSuccess, onClose});
         } else {
             toast({ title: "Please wait", description: "User session is loading, please try again in a moment.", variant: "default" });
         }
@@ -140,11 +150,24 @@ export default function PricingPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-6">
+                                    <div className="flex justify-center mb-4">
+                                        <Tabs value={currency} onValueChange={(value) => setCurrency(value as 'NGN' | 'USD')}>
+                                            <TabsList>
+                                                <TabsTrigger value="NGN">NGN</TabsTrigger>
+                                                <TabsTrigger value="USD">USD</TabsTrigger>
+                                            </TabsList>
+                                        </Tabs>
+                                    </div>
                                     <div className="text-center">
                                         <div className="text-5xl font-bold tracking-tighter">
-                                            <span className="flex items-center justify-center gap-2">{selectedTier.credits}<Gem className="h-8 w-8 text-primary" /></span>
+                                            <span className="flex items-center justify-center gap-2">
+                                                {selectedTier.credits}
+                                                <Image src="/coin.png" alt="Credit Coin" width={32} height={32} />
+                                            </span>
                                         </div>
-                                        <p className="text-2xl font-semibold text-muted-foreground">for ₦{nairaAmount}</p>
+                                        <p className="text-2xl font-semibold text-muted-foreground flex items-center justify-center">
+                                            for {currencySymbol}{amount}
+                                        </p>
                                     </div>
                                     
                                     <div>
@@ -167,7 +190,7 @@ export default function PricingPage() {
                                         disabled={isProcessing || authLoading}
                                     >
                                         {isProcessing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Zap className="mr-2 h-5 w-5" />}
-                                        Pay ₦{nairaAmount} Securely
+                                        Pay {currencySymbol}{amount} Securely
                                     </Button>
                                 </div>
                             </CardContent>
