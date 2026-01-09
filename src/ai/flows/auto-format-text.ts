@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -64,13 +65,24 @@ const autoFormatTextFlow = ai.defineFlow(
 
     if (output) {
       // The AI returns markdown. The editor needs HTML.
-      const textForEditor = output.formattedText
+      let textForEditor = output.formattedText
         .replace(/\\n/g, '\n') // Fix escaped newlines
         .replace(/\n/g, '<br>') // Convert newlines to <br> for the editor
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert markdown bold to HTML
-        .replace(/_(.*?)_/g, '<em>$1</em>') // Convert markdown italic to HTML
-        .replace(/^\* (.*$)/gm, '<ul><li>$1</li></ul>') // Convert markdown list items to HTML lists
-        .replace(/<\/ul><br><ul>/g, ''); // Merge adjacent lists
+        .replace(/_(.*?)_/g, '<em>$1</em>'); // Convert markdown italic to HTML
+
+      // Convert markdown lists to HTML lists
+      textForEditor = textForEditor.replace(/(\* .+(<br>)?)+/g, (match) => {
+        const items = match.split('* ').filter(item => item.trim() !== '');
+        const listItems = items.map(item => `<li>${item.replace(/<br>$/, '').trim()}</li>`).join('');
+        return `<ul>${listItems}</ul>`;
+      });
+      
+      // Clean up extra breaks around lists
+      textForEditor = textForEditor.replace(/<br><ul>/g, '<ul>');
+      textForEditor = textForEditor.replace(/<\/ul><br>/g, '</ul>');
+      textForEditor = textForEditor.replace(/<\/ul><br \/>/g, '</ul>');
+
 
       return { formattedText: textForEditor };
     }
