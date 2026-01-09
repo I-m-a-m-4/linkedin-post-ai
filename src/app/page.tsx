@@ -871,7 +871,7 @@ export default function Home() {
         <SiteHeader user={user} onLogin={() => setShowLoginDialog(true)} credits={credits} creditsLoading={creditsLoading || userLoading} userLoading={userLoading} trackAnalyticsEvent={trackAnalyticsEvent} />
 
         <main className="flex-1">
-           <section id="hero" className="container mx-auto grid grid-cols-1 items-center gap-y-16 gap-x-12 px-4 py-20 text-center lg:grid-cols-2 lg:py-32 lg:text-left mb-16">
+           <section id="hero" className="container mx-auto grid grid-cols-1 items-center gap-y-16 gap-x-12 px-4 py-20 text-center lg:grid-cols-2 lg:py-32 mb-16">
                 <div className="space-y-6 lg:order-first">
                     <div className="flex flex-col items-center justify-center gap-4 lg:items-start">
                          <div className="flex -space-x-2">
