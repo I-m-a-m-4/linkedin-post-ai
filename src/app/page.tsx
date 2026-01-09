@@ -265,9 +265,9 @@ export default function Home() {
       console.error("Could not load from local storage:", error);
     }
     
-    const localImages = ['/65963.jpg', '/House.jpg', '/land.jpg', '/start.jpg', '/web.jpeg'];
-    if (localImages.length >= 4) {
-        const shuffled = localImages.sort(() => 0.5 - Math.random());
+    const postImages = PlaceHolderImages.filter(img => img.id.startsWith('postImage_')).map(img => img.imageUrl);
+    if (postImages.length >= 4) {
+        const shuffled = postImages.sort(() => 0.5 - Math.random());
         setPreviewImages(shuffled.slice(0, 4));
     }
     setRandomName(professionalNames[Math.floor(Math.random() * professionalNames.length)]);
@@ -466,13 +466,10 @@ export default function Home() {
             clearInterval(interval);
             setFormattingProgress(100);
 
-            // Convert markdown bold to HTML strong tags for the editor
-            const processedHtml = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            
-            setText(processedHtml);
+            setText(formattedText);
             
             if (editorRef.current) {
-                editorRef.current.innerHTML = processedHtml;
+                editorRef.current.innerHTML = formattedText;
             }
 
             setShowConfetti(true);
@@ -515,24 +512,19 @@ export default function Home() {
   
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
-       // Apply to the current cursor position if no text is selected
-       if (command === 'bold' || command === 'italic' || command === 'underline' || command === 'strikethrough' || command === 'insertUnorderedList' || command === 'insertOrderedList') {
-        document.execCommand(command, false, value);
-        if (editorRef.current) setText(editorRef.current.innerHTML);
-      }
+       document.execCommand(command, false, value);
+       if (editorRef.current) setText(editorRef.current.innerHTML);
       return;
     }
   
-    if (selection.isCollapsed) {
-        // Handle style application at cursor without selection
+    if (selection.isCollapsed && command !== 'insertUnorderedList' && command !== 'insertOrderedList') {
         document.execCommand(command, false, value);
         if (editorRef.current) setText(editorRef.current.innerHTML);
         return;
     }
 
     const selectedText = selection.toString();
-    if (!selectedText) return;
-
+    
     let newHtml = '';
   
     if (command === 'unicode' && value) {
@@ -541,7 +533,6 @@ export default function Home() {
         const newText = convertTextToUnicode(selectedText, map || {});
         newHtml = newText.replace(/\n/g, '<br>');
       } else {
-         // This is a rough conversion back, might not be perfect for all cases
          const range = selection.getRangeAt(0);
          const normalText = selectedText.split('').map(char => {
              for (const style of Object.values(UNICODE_MAPS)) {
@@ -552,17 +543,13 @@ export default function Home() {
          }).join('');
          newHtml = normalText;
       }
+      document.execCommand('insertHTML', false, newHtml);
     } else if (command === 'uppercase') {
       newHtml = selectedText.toUpperCase().replace(/\n/g, '<br>');
+      document.execCommand('insertHTML', false, newHtml);
     } else {
       document.execCommand(command, false, value);
-      if (editorRef.current) {
-        setText(editorRef.current.innerHTML);
-      }
-      return;
     }
-    
-    document.execCommand('insertHTML', false, newHtml);
       
     if (editorRef.current) {
       setText(editorRef.current.innerHTML);
@@ -578,40 +565,74 @@ export default function Home() {
   
     try {
       const editorClone = editorRef.current.cloneNode(true) as HTMLElement;
-      
-      // Convert <strong> and <b> tags to Unicode bold
-      editorClone.querySelectorAll('strong, b').forEach(el => {
-        const text = el.textContent || '';
-        const boldText = convertTextToUnicode(text, UNICODE_MAPS.BOLD);
-        el.replaceWith(document.createTextNode(boldText));
-      });
-      
-      // Convert <em> and <i> tags to Unicode italic
-      editorClone.querySelectorAll('em, i').forEach(el => {
-        const text = el.textContent || '';
-        const italicText = convertTextToUnicode(text, UNICODE_MAPS.ITALIC);
-        el.replaceWith(document.createTextNode(italicText));
-      });
-
-      // This part is tricky, let's simplify to get clean text.
-      // The main goal is to convert HTML structure to plain text with newlines.
-      let plainText = '';
-      const childNodes = Array.from(editorClone.childNodes);
   
-      for (let i = 0; i < childNodes.length; i++) {
-        const node = childNodes[i];
-  
-        if (node.nodeName === 'P' || node.nodeName === 'DIV' || node.nodeName === 'UL' || node.nodeName === 'OL' || node.nodeName === 'LI') {
-            plainText += (node.textContent || '');
-             if (i < childNodes.length - 1) plainText += '\n';
-        } else if (node.nodeName === 'BR') {
-            plainText += '\n';
-        } else {
-            plainText += node.textContent || '';
+      // Function to recursively process nodes and build a plain text string
+      const processNode = (node: ChildNode): string => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return node.textContent || '';
         }
-      }
   
-      // Replace multiple newlines with just two
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as HTMLElement;
+          let content = '';
+          let prefix = '';
+          let suffix = '\n';
+  
+          switch (element.tagName) {
+            case 'STRONG':
+            case 'B':
+              return convertTextToUnicode(element.innerText, UNICODE_MAPS.BOLD);
+            case 'EM':
+            case 'I':
+              return convertTextToUnicode(element.innerText, UNICODE_MAPS.ITALIC);
+            case 'UL':
+              // Process list items within the UL
+              content = Array.from(element.childNodes).map(processNode).join('');
+              break;
+            case 'OL':
+              // Process list items within the OL with numbering
+              let counter = 1;
+              content = Array.from(element.childNodes).map(childNode => {
+                 if (childNode.nodeName === 'LI') {
+                   return `${counter++}. ${Array.from(childNode.childNodes).map(processNode).join('')}`;
+                 }
+                 return processNode(childNode);
+              }).join('');
+              break;
+            case 'LI':
+              // Handled by UL/OL, but as a fallback:
+              return `• ${Array.from(element.childNodes).map(processNode).join('')}\n`;
+            case 'P':
+            case 'DIV':
+              suffix = '\n\n'; // Double newline for paragraphs/divs
+              content = Array.from(element.childNodes).map(processNode).join('');
+              break;
+            case 'BR':
+              return '\n';
+            default:
+              content = Array.from(element.childNodes).map(processNode).join('');
+              suffix = '';
+              break;
+          }
+          
+          // For ULs specifically, prefix each LI text with a bullet
+          if (element.tagName === 'UL') {
+              let liContent = '';
+              element.querySelectorAll('li').forEach(li => {
+                  liContent += `• ${li.innerText}\n`;
+              });
+              content = liContent;
+          }
+
+          return prefix + content + suffix;
+        }
+  
+        return '';
+      };
+      
+      let plainText = Array.from(editorClone.childNodes).map(processNode).join('');
+  
+      // Final cleanup of excessive newlines
       let cleanedText = plainText.replace(/\n{3,}/g, '\n\n').trim();
   
       await navigator.clipboard.writeText(cleanedText);
@@ -805,17 +826,17 @@ export default function Home() {
   ];
 
   const renderImageGrid = () => {
-    if (previewImages.length < 4) return null;
+    if (previewImages.length < 3) return null;
   
     return (
-      <div className="mt-2 grid grid-cols-2 grid-rows-2 gap-1 aspect-video">
+      <div className="mt-2 grid grid-cols-2 grid-rows-2 gap-1 aspect-[4/3]">
         <div className="col-span-2 row-span-1 relative cursor-pointer" onClick={() => setLightboxImage(previewImages[0])}>
             <Image src={previewImages[0]} alt="Post image 1" layout="fill" className="object-cover" />
         </div>
-        <div className="col-span-1 row-span-1 relative cursor-pointer" onClick={() => setLightboxImage(previewImages[1])}>
+        <div className="relative cursor-pointer" onClick={() => setLightboxImage(previewImages[1])}>
             <Image src={previewImages[1]} alt="Post image 2" layout="fill" className="object-cover"/>
         </div>
-        <div className="col-span-1 row-span-1 relative cursor-pointer" onClick={() => setLightboxImage(previewImages[2])}>
+        <div className="relative cursor-pointer" onClick={() => setLightboxImage(previewImages[2])}>
             <Image src={previewImages[2]} alt="Post image 3" layout="fill" className="object-cover"/>
         </div>
       </div>
@@ -851,7 +872,7 @@ export default function Home() {
 
         <main className="flex-1">
            <section id="hero" className="container mx-auto grid grid-cols-1 items-center gap-y-16 gap-x-12 px-4 py-20 text-center lg:grid-cols-2 lg:py-32 lg:text-left mb-16">
-                <div className="space-y-6 lg:order-last">
+                <div className="space-y-6 lg:order-first">
                     <div className="flex flex-col items-center justify-center gap-4 lg:items-start">
                          <div className="flex -space-x-2">
                           {heroAvatars.map((avatar, index) => (
@@ -1259,5 +1280,3 @@ export default function Home() {
     </TooltipProvider>
   );
 }
-
-    

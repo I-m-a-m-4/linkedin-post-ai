@@ -34,23 +34,23 @@ const autoFormatTextPrompt = ai.definePrompt({
   prompt: `You are an AI assistant specialized in formatting text for optimal readability and engagement on LinkedIn.
 
   **Primary Formatting Objective:**
-  Your main purpose is to FORMAT the user's text, not to correct or change their language or grammar. You must preserve the user's original phrasing and wording. Your formatting should be subtle and professional.
+  Your main purpose is to FORMAT the user's text, not to rewrite or change their core message. Preserve the user's original phrasing. Your formatting should be clean, professional, and subtle.
 
   **Formatting Rules:**
-  - **Whitespace is Paramount:** Use generous line breaks (\\n) to create a clean, scannable, and breathable structure. Separate paragraphs and ideas with empty lines.
-  - **Markdown Bolding (Use Sparingly):** To indicate bolding, you MUST use standard markdown for bolding (\`**text**\`). Use this to highlight only the most critical keywords or short phrases. **Do not bold full sentences.** Over-bolding looks unprofessional.
-  - **Subtle Emphasis:** Where appropriate, you can use ALL CAPS for single words to add impact.
-  - **Smart Lists:** If the text contains a list, convert it into bullet points. You can use standard markers like '*' or '->'.
-  - **Subtle Emojis:** Use a maximum of 1-2 relevant, professional emojis for the entire post. The goal is subtle enhancement, not distraction.
-  - **Hook and Clarity:** If a strong opening "hook" is missing, re-arrange the user's own sentences to create one, but do not write new content.
+  - **Whitespace is Paramount:** Use generous line breaks to create a clean, scannable, and breathable structure. Separate paragraphs and ideas with empty lines.
+  - **Bolding (Use Sparingly):** To indicate bolding, you MUST use standard markdown (\`**text**\`). Use this to highlight only the most critical keywords or short phrases (2-3 words max). **Do NOT bold full sentences.** Over-bolding looks unprofessional.
+  - **Italics for Emphasis:** Where appropriate, use markdown for italics (\`_text_\`) to add subtle emphasis to a word or phrase.
+  - **Smart Lists:** If the text contains a list, convert it into bullet points. You MUST use a standard asterisk marker followed by a space (e.g., \`* List item\`).
+  - **Subtle & Contextual Emojis:** Use a maximum of 2-3 relevant, professional emojis for the entire post. Place them strategically at the end of lines. For milestones or achievements, consider using a medal (🏅) or trophy (🏆) emoji.
+  - **Hook and Clarity:** If a strong opening "hook" is missing, rearrange the user's own sentences to create one, but do not write new content.
   - **Professional Tone:** Ensure the final output maintains a professional, clear, and authoritative tone suitable for LinkedIn.
-  - **No Horizontal Rules:** Do not use '---'.
+  - **No Horizontal Rules:** Do not use '---' or other separators.
   - **Link Handling**: Leave URLs as plain text. Do not wrap them in any special format.
 
   **Input Text To Process:**
   {{{rawText}}}
 
-  Provide your response in the specified JSON format, containing only the formatted text.`,
+  Provide your response in the specified JSON format, containing only the formatted text. The output should be a single string with markdown for bolding, italics, and lists.`,
 });
 
 const autoFormatTextFlow = ai.defineFlow(
@@ -63,10 +63,14 @@ const autoFormatTextFlow = ai.defineFlow(
     const { output } = await autoFormatTextPrompt({ rawText: input.rawText });
 
     if (output) {
-      // The AI returns markdown bolding (**text**). The frontend will handle conversion for the editor.
+      // The AI returns markdown. The editor needs HTML.
       const textForEditor = output.formattedText
-        .replace(/\\n/g, '\n')
-        .replace(/\n/g, '<br>');
+        .replace(/\\n/g, '\n') // Fix escaped newlines
+        .replace(/\n/g, '<br>') // Convert newlines to <br> for the editor
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert markdown bold to HTML
+        .replace(/_(.*?)_/g, '<em>$1</em>') // Convert markdown italic to HTML
+        .replace(/^\* (.*$)/gm, '<ul><li>$1</li></ul>') // Convert markdown list items to HTML lists
+        .replace(/<\/ul><br><ul>/g, ''); // Merge adjacent lists
 
       return { formattedText: textForEditor };
     }
