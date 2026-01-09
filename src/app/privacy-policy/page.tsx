@@ -21,7 +21,7 @@ import {
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-
+import Image from 'next/image';
 
 export default function PrivacyPolicyPage() {
     const [user, authLoading] = useAuthState(auth);
