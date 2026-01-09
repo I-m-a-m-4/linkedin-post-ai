@@ -12,6 +12,7 @@ interface SiteFooterProps {
     isSubmittingReview: boolean;
     userLoading: boolean;
     handleSubmitReview: () => void;
+    trackAnalyticsEvent?: (eventName: string) => void;
 }
 
 export function SiteFooter({ 
@@ -19,7 +20,8 @@ export function SiteFooter({
     setReviewText, 
     isSubmittingReview, 
     userLoading, 
-    handleSubmitReview 
+    handleSubmitReview,
+    trackAnalyticsEvent
 }: SiteFooterProps) {
     const hasReviewFunctionality = !!handleSubmitReview;
 
@@ -53,8 +55,8 @@ export function SiteFooter({
                 <div className="flex flex-col gap-4">
                     <h4 className="font-medium text-lg mb-2">PostAI</h4>
                     <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">Editor</Link>
-                    <Link href="/story" className="text-muted-foreground hover:text-primary transition-colors">Our Story</Link>
-                    <Link href="/#editor" className="text-muted-foreground hover:text-primary transition-colors">Features</Link>
+                    <Link href="/story" onClick={() => trackAnalyticsEvent?.('storyPageClick_footer')} className="text-muted-foreground hover:text-primary transition-colors">Our Story</Link>
+                    <Link href="/pricing" onClick={() => trackAnalyticsEvent?.('pricingPageClick_footer')} className="text-muted-foreground hover:text-primary transition-colors">Pricing</Link>
                 </div>
                 
                  <div className="flex flex-col gap-4">

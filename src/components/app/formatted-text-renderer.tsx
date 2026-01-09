@@ -2,7 +2,6 @@
 'use client';
 import React from 'react';
 
-// This component will now primarily render HTML from the contentEditable div
 type FormattedTextRendererProps = {
   text: string; // Expecting a string containing HTML
 };
@@ -10,14 +9,13 @@ type FormattedTextRendererProps = {
 export const FormattedTextRenderer: React.FC<FormattedTextRendererProps> = ({ text }) => {
   if (!text) return null;
 
-  // Since the text is already HTML from the editor, we can render it directly.
-  // We add some styling to ensure lists look correct.
+  // The AI returns markdown bold as **text**. We convert it to <strong> for rendering.
+  // We also detect URLs and wrap them in <a> tags for the preview.
+  const linkRegex = /(https?:\/\/[^\s]+)/g;
   const cleanedText = text
-    .replace(/---/g, '')
-    .replace(/<hr\s*\/?>/gi, '')
-    .replace(/(#\w+)/g, '<span class="font-bold text-primary">$1</span>')
-    .replace(/@(\w+)/g, '<span class="font-bold text-primary cursor-pointer">$1</span>');
-
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(linkRegex, '<a href="$1" target="_blank" rel="noopener noreferrer" class="font-bold text-primary hover:underline">$1</a>');
+  
   return (
     <div
       className="prose-base prose-p:my-2 prose-ul:my-2 prose-li:my-1 prose-strong:font-bold prose-em:italic"
@@ -25,5 +23,3 @@ export const FormattedTextRenderer: React.FC<FormattedTextRendererProps> = ({ te
     />
   );
 };
-
-    

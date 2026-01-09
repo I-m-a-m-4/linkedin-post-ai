@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, runTransaction, serverTimestamp, collection, getDoc, writeBatch, query, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, runTransaction, serverTimestamp, collection, getDoc, writeBatch, query, orderBy, limit, Timestamp, getDocs } from 'firebase/firestore';
 
 const FREE_CREDITS = 2;
 const FORMAT_COST = 1;

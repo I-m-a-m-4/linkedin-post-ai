@@ -1,3 +1,4 @@
+
 // src/app/admin/analytics-client.tsx
 'use client';
 import {
@@ -8,10 +9,12 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import {
+  LineChart as ReLineChart,
   BarChart as ReBarChart,
   XAxis,
   YAxis,
   Bar,
+  Line,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
@@ -26,6 +29,11 @@ import {
   Loader2,
   Gift,
   Search,
+  DollarSign,
+  FileText,
+  Star,
+  TrendingUp,
+  Calendar,
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -44,7 +52,7 @@ import {
   increment,
   writeBatch,
 } from 'firebase/firestore';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { auth, db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,6 +124,7 @@ type Purchase = {
     userId: string;
     credits: number;
     amount: number;
+    currency: string;
     timestamp: {
         seconds: number;
         nanoseconds: number;
@@ -139,6 +148,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+// Based on Gemini 1.5 Flash pricing for text generation, assuming an avg of 1000 tokens per request. This is a rough estimate.
+const COST_PER_AUTOFORMAT_NGN = 0.12; 
+
+const NairaIcon = () => <span className="font-sans font-bold">&#8358;</span>;
+
 export default function AnalyticsClient() {
   const [user] = useAuthState(auth);
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -157,24 +171,32 @@ export default function AnalyticsClient() {
     if (!user) return;
 
     const unsubscribes: Unsubscribe[] = [];
-    const userProfiles: { [key: string]: UserProfile } = {};
+    let isMounted = true;
 
-    const fetchUserProfiles = async (userIds: string[]) => {
+    const userProfilesCache: { [key: string]: UserProfile } = {};
+
+    const fetchAndCacheUserProfiles = async (userIds: string[]) => {
+        const uniqueIds = [...new Set(userIds)].filter(id => id && !userProfilesCache[id]);
+        if (uniqueIds.length === 0) return;
+
         const newProfiles: { [key: string]: UserProfile } = {};
-        const idsToFetch = userIds.filter(id => !userProfiles[id]);
-        if (idsToFetch.length === 0) return newProfiles;
-
         await Promise.all(
-            idsToFetch.map(async (id) => {
-                const userDocRef = doc(db, 'users', id);
-                const userDocSnap = await getDoc(userDocRef);
-                if (userDocSnap.exists()) {
-                    newProfiles[id] = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
+            uniqueIds.map(async (id) => {
+                try {
+                    const userDocRef = doc(db, 'users', id);
+                    const userDocSnap = await getDoc(userDocRef);
+                    if (userDocSnap.exists()) {
+                        newProfiles[id] = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
+                    }
+                } catch (error) {
+                    console.error(`Failed to fetch profile for user ${id}:`, error);
                 }
             })
         );
-        Object.assign(userProfiles, newProfiles);
-        return newProfiles;
+
+        if (isMounted) {
+            Object.assign(userProfilesCache, newProfiles);
+        }
     };
 
     const usersRef = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
@@ -182,17 +204,19 @@ export default function AnalyticsClient() {
       const usersData = snapshot.docs.map(
         (doc) => ({ id: doc.id, ...doc.data() } as UserProfile)
       );
-      setUsers(usersData);
-      usersData.forEach(u => userProfiles[u.id] = u);
-      setLoading(false);
+      if (isMounted) {
+        setUsers(usersData);
+        usersData.forEach(u => userProfilesCache[u.id] = u);
+        setLoading(false);
+      }
     }, (error) => console.error("Error fetching users:", error)));
 
-    const eventsRef = collection(db, 'analyticsEvents');
+    const eventsRef = query(collection(db, 'analyticsEvents'), orderBy('timestamp', 'desc'));
     unsubscribes.push(onSnapshot(eventsRef, (snapshot) => {
       const eventsData = snapshot.docs.map(
         (doc) => ({ ...doc.data(), id: doc.id } as AnalyticsEvent)
       );
-      setEvents(eventsData);
+      if (isMounted) setEvents(eventsData);
     }, (error) => console.error("Error fetching events:", error)));
 
     const reviewsRef = query(collection(db, 'reviews'), orderBy('timestamp', 'desc'));
@@ -200,9 +224,10 @@ export default function AnalyticsClient() {
       const reviewsData = snapshot.docs.map(
         (doc) => ({ ...doc.data(), id: doc.id } as Review)
       );
-      await fetchUserProfiles(reviewsData.map(r => r.userId));
-      const reviewsWithUsers = reviewsData.map(review => ({...review, userProfile: userProfiles[review.userId]}));
-      setReviews(reviewsWithUsers);
+      await fetchAndCacheUserProfiles(reviewsData.map(r => r.userId));
+      if (isMounted) {
+        setReviews(reviewsData.map(r => ({...r, userProfile: userProfilesCache[r.userId]})));
+      }
     }, (error) => console.error("Error fetching reviews:", error)));
     
     const postsQuery = query(collectionGroup(db, 'posts'));
@@ -210,29 +235,40 @@ export default function AnalyticsClient() {
       const postsData = snapshot.docs.map(
         (doc) => ({ ...doc.data(), id: doc.id } as Post)
       );
-      setPosts(postsData);
-    }, (error) => console.error("Error fetching posts:", error)));
+      if (isMounted) setPosts(postsData);
+    }, (error) => {
+      console.error("Error fetching posts:", error);
+      toast({
+        title: 'Data Fetching Error',
+        description: 'Could not load all posts. Check Firestore rules.',
+        variant: 'destructive',
+      });
+    }));
 
     const purchasesRef = query(collection(db, 'purchases'), orderBy('timestamp', 'desc'));
     unsubscribes.push(onSnapshot(purchasesRef, async (snapshot) => {
         const purchasesData = snapshot.docs.map(
             (doc) => ({ ...doc.data(), id: doc.id } as Purchase)
         );
-        await fetchUserProfiles(purchasesData.map(p => p.userId));
-        const purchasesWithUsers = purchasesData.map(purchase => ({...purchase, userProfile: userProfiles[purchase.userId]}));
-        setPurchases(purchasesWithUsers);
+        await fetchAndCacheUserProfiles(purchasesData.map(p => p.userId));
+        if (isMounted) {
+            setPurchases(purchasesData.map(p => ({...p, userProfile: userProfilesCache[p.userId]})));
+        }
     }, (error) => console.error("Error fetching purchases:", error)));
 
 
     return () => {
+      isMounted = false;
       unsubscribes.forEach((unsub) => unsub());
     };
-  }, [user]);
+  }, [user, toast]);
 
   const analyticsData = useMemo(() => {
     const totalUsers = users.length;
-    const totalClicks = events.filter(e => e.eventType === 'autoFormatClick').length;
-
+    const totalClicks = events.filter(e => e.eventType === 'autoFormat').length;
+    const pricingPageClicks = events.filter(e => e.eventType.startsWith('pricingPageClick')).length;
+    const storyPageClicks = events.filter(e => e.eventType.startsWith('storyPageClick')).length;
+    
     const dailyActiveUsers = new Set(
       events
         .filter(
@@ -252,6 +288,46 @@ export default function AnalyticsClient() {
       }, {} as Record<string, number>);
     const newUserGrowth = Object.entries(usersByDate).map(([date, count]) => ({ date, 'New Users': count }));
 
+    const totalRevenue = purchases.reduce((sum, p) => sum + p.amount, 0);
+
+    const thirtyDaysAgo = subDays(new Date(), 30);
+    const mrr = purchases
+        .filter(p => new Date(p.timestamp.seconds * 1000) >= thirtyDaysAgo)
+        .reduce((sum, p) => sum + p.amount, 0);
+    
+    const arr = mrr * 12;
+
+    const revenueByDate = purchases.reduce((acc, purchase) => {
+        if (purchase.timestamp && purchase.timestamp.seconds) {
+          const date = format(new Date(purchase.timestamp.seconds * 1000), 'MMM d');
+          acc[date] = (acc[date] || 0) + purchase.amount;
+        }
+        return acc;
+    }, {} as Record<string, number>);
+    const revenueGrowth = Object.entries(revenueByDate).map(([date, amount]) => ({ date, 'Revenue': amount }));
+
+    const totalApiCost = posts.length * COST_PER_AUTOFORMAT_NGN;
+
+    const avgPostsPerUser = totalUsers > 0 ? (posts.length / totalUsers).toFixed(2) : 0;
+    
+    const postsPerUser = posts.reduce((acc, post) => {
+        acc[post.userId] = (acc[post.userId] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    const topUsers = Object.entries(postsPerUser)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5)
+        .map(([userId, postCount]) => {
+            const userProfile = users.find(u => u.id === userId);
+            return {
+                id: userId,
+                email: userProfile?.email || 'Unknown',
+                photoURL: userProfile?.photoURL,
+                postCount,
+            };
+        });
+
     return {
       totalUsers,
       totalClicks,
@@ -259,8 +335,17 @@ export default function AnalyticsClient() {
       dailyActiveUsers,
       newUserGrowth,
       totalReviews: reviews.length,
+      totalApiCost,
+      pricingPageClicks,
+      storyPageClicks,
+      totalRevenue,
+      revenueGrowth,
+      avgPostsPerUser,
+      mrr,
+      arr,
+      topUsers,
     };
-  }, [events, posts, users, reviews]);
+  }, [events, posts, users, reviews, purchases]);
 
   const handleDeleteReview = async (reviewId: string) => {
     setDeletingId(reviewId);
@@ -350,7 +435,7 @@ export default function AnalyticsClient() {
     );
   }
 
-  const geminiConsoleUrl = `https://aistudio.google.com/app/u/0/usage?timeRange=last-hour&project=format-iq`;
+  const geminiConsoleUrl = `https://aistudio.google.com/app/u/0/usage?project=format-iq`;
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
@@ -361,22 +446,50 @@ export default function AnalyticsClient() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-        <Card className="col-span-2">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clicks</CardTitle>
-            <MousePointerClick className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {analyticsData.totalClicks}
+              <NairaIcon />{analyticsData.totalRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              "Auto Format" clicks all time
+              From all purchases
             </p>
           </CardContent>
         </Card>
-        <Card className="col-span-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">MRR</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              <NairaIcon />{analyticsData.mrr.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Revenue in last 30 days
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">ARR</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              <NairaIcon />{analyticsData.arr.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Projected annual revenue
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -388,7 +501,7 @@ export default function AnalyticsClient() {
             </p>
           </CardContent>
         </Card>
-        <Card className="col-span-2">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Daily Active Users
@@ -402,7 +515,7 @@ export default function AnalyticsClient() {
             <p className="text-xs text-muted-foreground">Users active today</p>
           </CardContent>
         </Card>
-        <Card className="col-span-2">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Total Posts Formatted
@@ -412,7 +525,71 @@ export default function AnalyticsClient() {
           <CardContent>
             <div className="text-2xl font-bold">{analyticsData.totalPosts}</div>
             <p className="text-xs text-muted-foreground">
-              Total posts saved by users
+              Total posts formatted by users
+            </p>
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Reviews</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{analyticsData.totalReviews}</div>
+             <p className="text-xs text-muted-foreground">
+              From all users
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pricing Page Clicks</CardTitle>
+            <MousePointerClick className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{analyticsData.pricingPageClicks}</div>
+             <p className="text-xs text-muted-foreground">
+              Total clicks on pricing links
+            </p>
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Our Story Page Clicks</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{analyticsData.storyPageClicks}</div>
+             <p className="text-xs text-muted-foreground">
+              Total clicks on story links
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Posts/User</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{analyticsData.avgPostsPerUser}</div>
+             <p className="text-xs text-muted-foreground">
+              Average posts per user
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="col-span-2 md:col-span-3 lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Estimated Gemini API Cost
+            </CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              <NairaIcon />{analyticsData.totalApiCost.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Based on {analyticsData.totalPosts} posts @ <NairaIcon />{COST_PER_AUTOFORMAT_NGN.toFixed(2)} each
             </p>
           </CardContent>
         </Card>
@@ -436,51 +613,42 @@ export default function AnalyticsClient() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle>Purchase History</CardTitle>
-            <CardDescription>A log of all successful credit purchases.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[250px] -mr-4 pr-4">
-              {purchases.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead className="text-right">Credits</TableHead>
-                      <TableHead className="text-right">Date</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {purchases.map(purchase => (
-                      <TableRow key={purchase.id}>
-                        <TableCell>
-                           <div className="flex items-center gap-2">
-                             <Avatar className="h-8 w-8 border">
-                                <AvatarImage src={purchase.userProfile?.photoURL} alt={purchase.userProfile?.displayName} />
-                                <AvatarFallback>{purchase.userProfile?.displayName?.charAt(0) || 'U'}</AvatarFallback>
-                             </Avatar>
-                             <span className="font-medium truncate">{purchase.userProfile?.displayName || `User ${purchase.userId.slice(0, 6)}`}</span>
-                           </div>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold text-green-500">+{purchase.credits}</TableCell>
-                        <TableCell className="text-right text-xs text-muted-foreground">
-                          {format(new Date(purchase.timestamp.seconds * 1000), 'MMM d, yyyy')}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">No purchases yet.</div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
+            <CardHeader>
+              <CardTitle>Revenue Over Time</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <ReLineChart data={analyticsData.revenueGrowth}>
+                  <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+                  <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                  <YAxis
+                    tickFormatter={(value) => `₦${value}`}
+                    allowDecimals={false}
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-background/80 backdrop-blur-sm p-3 border rounded-lg shadow-lg">
+                            <p className="text-sm font-bold mb-1">{label}</p>
+                            <p className="text-sm text-green-500">{`Revenue: ₦${payload[0].value}`}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Line type="monotone" dataKey="Revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--primary))" }} />
+                </ReLineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
       </div>
 
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1">
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
             <CardHeader>
                 <CardTitle>User Management</CardTitle>
                 <CardDescription>Grant credits to users.</CardDescription>
@@ -524,7 +692,89 @@ export default function AnalyticsClient() {
                 </ScrollArea>
             </CardContent>
         </Card>
-        <Card className="lg:col-span-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Users by Posts</CardTitle>
+            <CardDescription>Users who have formatted the most posts.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[330px] -mr-4 pr-4">
+              {analyticsData.topUsers.length > 0 ? (
+                <div className="space-y-4">
+                    {analyticsData.topUsers.map(topUser => (
+                        <div key={topUser.id} className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9 border">
+                                <AvatarImage src={topUser.photoURL} alt={topUser.email} />
+                                <AvatarFallback>{topUser.email.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 overflow-hidden">
+                                <p className="font-medium truncate text-sm">{topUser.email}</p>
+                                <p className="text-xs text-muted-foreground">{topUser.postCount} posts</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Not enough data.</div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
+      
+       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+         <div className="lg:col-span-5">
+            <Card>
+              <CardHeader>
+                <CardTitle>Purchase History</CardTitle>
+                <CardDescription>A log of all successful credit purchases.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[330px] -mr-4 pr-4">
+                  {purchases.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>User</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead className="text-right">Credits</TableHead>
+                          <TableHead className="text-right">Amount (NGN)</TableHead>
+                          <TableHead className="text-right">Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {purchases.map(purchase => (
+                          <TableRow key={purchase.id}>
+                            <TableCell>
+                               <div className="flex items-center gap-2">
+                                 <Avatar className="h-8 w-8 border">
+                                    <AvatarImage src={purchase.userProfile?.photoURL} alt={purchase.userProfile?.displayName} />
+                                    <AvatarFallback>{purchase.userProfile?.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                                 </Avatar>
+                                 <span className="font-medium truncate">{purchase.userProfile?.displayName || `...${purchase.userId.slice(-6)}`}</span>
+                               </div>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground truncate">{purchase.userProfile?.email || 'N/A'}</TableCell>
+                            <TableCell className="text-right font-semibold text-green-500">+{purchase.credits}</TableCell>
+                            <TableCell className="text-right font-semibold"><NairaIcon/>{purchase.amount.toLocaleString()}</TableCell>
+                            <TableCell className="text-right text-xs text-muted-foreground">
+                              {format(new Date(purchase.timestamp.seconds * 1000), 'MMM d, yyyy')}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">No purchases yet.</div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+         </div>
+      </div>
+
+       <div className="grid grid-cols-1 gap-6">
+        <Card>
           <CardHeader>
             <CardTitle>User Reviews</CardTitle>
             <CardDescription>

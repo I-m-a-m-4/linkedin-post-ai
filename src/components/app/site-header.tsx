@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button"
-import { Gem, LogOut, Loader2, User } from "lucide-react"
+import { Gem, LogOut, Loader2, User, FileText, Star } from "lucide-react"
 import type { User as FirebaseUser } from 'firebase/auth';
 import { Skeleton } from "../ui/skeleton";
 import Link from "next/link";
@@ -18,7 +18,7 @@ import {
 
 const ADMIN_EMAIL = 'belloimam431@gmail.com';
 
-const UserNav = ({ user }: { user: FirebaseUser }) => {
+const UserNav = ({ user, trackAnalyticsEvent }: { user: FirebaseUser, trackAnalyticsEvent: (eventName: string) => void }) => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -47,6 +47,18 @@ const UserNav = ({ user }: { user: FirebaseUser }) => {
                         <span>Profile</span>
                     </Link>
                 </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                    <Link href="/story" onClick={() => trackAnalyticsEvent('storyPageClick_header')}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        <span>Our Story</span>
+                    </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                    <Link href="/pricing" onClick={() => trackAnalyticsEvent('pricingPageClick_header')}>
+                        <Star className="mr-2 h-4 w-4" />
+                        <span>Pricing</span>
+                    </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => auth.signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -58,9 +70,15 @@ const UserNav = ({ user }: { user: FirebaseUser }) => {
 };
 
 
-export function SiteHeader({ user, onLogin, credits, creditsLoading, userLoading }: { user: FirebaseUser | null, onLogin: () => void, credits: number | null, creditsLoading: boolean, userLoading: boolean }) {
+export function SiteHeader({ user, onLogin, credits, creditsLoading, userLoading, trackAnalyticsEvent }: { user: FirebaseUser | null, onLogin: () => void, credits: number | null, creditsLoading: boolean, userLoading: boolean, trackAnalyticsEvent?: (eventName: string) => void }) {
     const isAdmin = user?.email === ADMIN_EMAIL;
     const validUser = user && user.email; // A user is valid if they are not anonymous
+
+    const handleTrackedClick = (eventName: string) => {
+        if (validUser && trackAnalyticsEvent) {
+            trackAnalyticsEvent(eventName);
+        }
+    };
 
     const renderCredits = () => {
         if (creditsLoading || (validUser && credits === null)) {
@@ -73,13 +91,13 @@ export function SiteHeader({ user, onLogin, credits, creditsLoading, userLoading
              <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1.5 text-sm font-semibold">
+                         <Link href="/pricing" className="flex items-center gap-1.5 text-sm font-semibold" onClick={() => handleTrackedClick('pricingPageClick_header_credits')}>
                             <Gem className="h-4 w-4 text-primary" />
                             <span>{credits ?? 0} Credits</span>
-                        </div>
+                        </Link>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>1 credit is used per "Auto Format" action.</p>
+                        <p>1 credit is used per "Auto Format" action. Click to buy more.</p>
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
@@ -96,7 +114,15 @@ export function SiteHeader({ user, onLogin, credits, creditsLoading, userLoading
                     </h1>
                 </Link>
             </div>
-            <nav className="ml-auto flex items-center gap-4">
+             <nav className="hidden md:flex items-center gap-6 ml-10 text-sm font-medium">
+                <Link href="/story" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => handleTrackedClick('storyPageClick_header')}>
+                    Our Story
+                </Link>
+                <Link href="/pricing" className="text-muted-foreground transition-colors hover:text-foreground" onClick={() => handleTrackedClick('pricingPageClick_header')}>
+                    Pricing
+                </Link>
+            </nav>
+            <div className="ml-auto flex items-center gap-4">
                 {userLoading ? <Skeleton className="h-8 w-24 rounded-md" /> : (
                     <>
                         {validUser ? (
@@ -107,13 +133,13 @@ export function SiteHeader({ user, onLogin, credits, creditsLoading, userLoading
                                     </Button>
                                 )}
                                 {!isAdmin && (
-                                    <Link href="/pricing" className={cn(
+                                    <div className={cn(
                                         "rounded-full bg-muted px-3 py-1.5 cursor-pointer transition-colors hover:bg-muted/80"
                                     )}>
                                     {renderCredits()}
-                                    </Link>
+                                    </div>
                                 )}
-                                <UserNav user={user} />
+                                <UserNav user={user} trackAnalyticsEvent={handleTrackedClick}/>
                             </>
                         ) : (
                           <Button onClick={onLogin} variant="outline" className="border-primary text-primary hover:bg-primary/10">
@@ -122,7 +148,7 @@ export function SiteHeader({ user, onLogin, credits, creditsLoading, userLoading
                         )}
                     </>
                 )}
-            </nav>
+            </div>
         </header>
     )
 }
